@@ -8,20 +8,19 @@ library(dplyr)
 # Bernulli distrubution
 
 # true successful rate for Bernulli distribution
-p0 <- 0.3
+p0 <- 0.5
 # the number of observation in current data
-n <- 60
+n <- 50
 # current data
 D <- rbinom(n, 1, p0)
 
 # historical data parameters
-ns <- c(30, 30, 30)
-ps <- c(0.2, 0.3, 0.7)
+ns <- c(100, 100, 100)
+ps <- c(0.1, 0.5, 0.7)
 Ds <- list()
 for (i in 1:length(ns)){
   Ds[[i]] <- rbinom(ns[i], 1, ps[i])
 }
-
 
 alpha <- 0.025
 
@@ -57,6 +56,46 @@ HPD.full <- hpd(qbeta, shape1=alpha.full, shape2=beta.full);HPD.full
 
 ## power prior
 ## to be done
+gen.conpostp.jpp <- function(D, Ds, gammas){
+  alp <- sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*sum(Ds[[i]])}))
+  bt <- length(D) - sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*(length(Ds[[i]])-sum(Ds[[i]]))}))
+  rbeta(1, shape1=alp, shape2=bt)
+}
+
+gen.conpostga.jpp <- function(n, p, Dh){
+  a <- sum(Dh)
+  b <- length(Dh) - sum(Dh)
+  unisps <- runif(n)
+  den <- b*log(1-p) + a*log(p)
+  num <- log(1+((1-p)^b*p^a-1)*unisps)
+  num/den
+}
+
+gen.post.jpp <- function(N, D, Ds, burnin=5000){
+  flag <- 0
+  sps <- vector()
+  gammass <- list()
+  p <- 0.1
+  for (i in 1:N){
+    gammas <- sapply(Ds, function(Dh){gen.conpostga.jpp(1, p, Dh)})
+    p <- gen.conpostp.jpp(D, Ds, gammas)
+    if (i > burnin){
+      sps <- c(sps, p)
+      gammass[[i-burnin]] <- gammas
+    }
+  }
+  list(sps=sps, gam=gammass)
+}
+
+post.sps.jpp <- gen.post.jpp(10000, D, Ds)
+post.sps.gammas.jpp <- post.sps.jpp$gam
+post.sps.jpp <- post.sps.jpp$sps
+#post.sps.jpp <- sapply(1:10000, function(i)gen.conpostp.jpp(D, Ds, c(0.5, 0.5, 0.5)))
+low.jpp <- quantile(post.sps.jpp, alpha)
+up.jpp <- quantile(post.sps.jpp, 1-alpha)
+CI.eq.jpp <- c(low.jpp, up.jpp)
+post.mean.jpp <- mean(post.sps.jpp); post.mean.jpp
+HPD.jpp <- emp.hpd(post.sps.jpp); HPD.jpp
 
 ## UIP-multi
 # compute corresponding (alpha, beta) given M1, M2, M3
@@ -172,8 +211,8 @@ res[, c(1, 5, 2, 3, 4)]
 
 
 #draw the plot of the results
-colss <- rainbow(10)
-plot(CI.eq.non, c(1, 1), type="l", col=colss[1], lwd=2, xlim=c(0, 1), ylim=c(0, 5), yaxt='n', ylab="", xlab="")
+colss <- rainbow(6)
+plot(CI.eq.non, c(1, 1), type="l", col=colss[1], lwd=2, xlim=c(0, 1), ylim=c(0, 6), yaxt='n', ylab="", xlab="")
 points(post.mean.non, 1, pch=19, cex=1)
 lines(CI.eq.jef, c(2, 2), type="l", col=colss[2], lwd=2)
 points(post.mean.jef, 2, pch=19, cex=1)
@@ -183,5 +222,8 @@ lines(CI.eq.UIPm, c(4, 4), type="l", col=colss[4], lwd=2)
 points(post.mean.UIPm, 4, pch=19, cex=1)
 lines(CI.eq.UIPkl, c(5, 5), type="l", col=colss[5], lwd=2)
 points(post.mean.UIPkl, 5, pch=19, cex=1)
+lines(CI.eq.jpp, c(6, 6), type="l", col=colss[6], lwd=2)
+points(post.mean.jpp, 6, pch=19, cex=1)
 abline(v=p0)
-axis(2, 1:5, c("non-info", "jeffrey", "full-info", "UIPm", "UIP-KL"), las=2)
+axis(2, 1:6, c("non-info", "jeffrey", "full-info", "UIPm", "UIP-KL", "JPP"), las=2)
+axis(1, p0, expression(p[0]))

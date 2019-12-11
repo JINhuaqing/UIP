@@ -219,7 +219,7 @@ Bern.Simu <- function(jj, p0){
     iter.res
 }
 
-p0 <- 0.9
+p0 <- 0.3
 Num <- 1000
 
 results <- mclapply(1:Num, Bern.Simu, p0=p0, mc.cores=5)

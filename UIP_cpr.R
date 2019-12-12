@@ -61,10 +61,11 @@ gen.prior.UIP.KL <- function(N, D, Ds, lam){
   ms <- lapply(paras, function(para){KL.dist.beta(para, para0)}) %>% do.call(c, args=.)
   ms <- 1/ms
   s.pois <- rtpois(N, lambda=lam, a=0, b=2*lam)
-  Mss <- lapply(s.pois, function(s.poi){ms*s.poi})
+  Mss <- lapply(s.pois, function(s.poi){ms*s.poi/sum(ms)})
   sps <- lapply(Mss, function(Ms){paras <- cond.prior(Ds, Ms); rbeta(1, shape1=paras[1], shape2=paras[2])})
+  #sps <- lapply(Mss, function(Ms){paras <- cond.prior(Ds, Ms); x = rbeta(1, shape1=paras[1], shape2=paras[2]); if(is.na(x))print(c(Ms, paras, x)); x})
   sps <- do.call(c, sps)
-  sps
+  list(sps=sps, s.pois=s.pois)
 }
 
 # genrate sample from posteior given D with UPDKL
@@ -77,13 +78,15 @@ gen.post.UIP.KL <- function(N, D, Ds, fct=0.5){
   logden <- Dsum*log(MLE) + nDsum*log(1-MLE) 
   den <- exp(logden)
   
-  sps <- gen.prior.UIP.KL(N, D, Ds, n*fct)
+  all <- gen.prior.UIP.KL(N, D, Ds, n*fct)
+  sps <- all$sps
   lognums <- Dsum*log(sps) + nDsum*log(1-sps)
   nums <- exp(lognums)
   
   unifs <- runif(N)
   vs <- nums/den
-  sps[vs>=unifs]
+  keepidx <- vs >= unifs
+  list(sps=sps[keepidx], s.pois=all$s.pois[keepidx])
 }
 
 # UIP-M prior functions
@@ -96,16 +99,18 @@ cond.prior <- function(Ds, Ms){
   bv <- 1/sum(Ms*Is)
   alpha <- av * (av*(1-av)/bv - 1)
   beta <- (1-av) * (av*(1-av)/bv - 1)
+  #if (alpha < 0) print(c(av, bv))
   return(c(alpha, beta))
 }
 
 # generate sample from prior 
 gen.prior.UIP.multi <- function(N, Ds, lam){
+  numDs <- length(Ds)
   s.pois <- rtpois(N, lambda=lam, a=0, b=2*lam)
-  s.multis <- lapply(s.pois, function(x)rmultinom(1, size=x, rep(1, 3)/3))
+  s.multis <- lapply(s.pois, function(x)rmultinom(1, size=x, rep(1, numDs)/numDs))
   sps <- lapply(s.multis, function(Ms){paras <- cond.prior(Ds, Ms); rbeta(1, shape1=paras[1], shape2=paras[2])})
   sps <- do.call(c, sps)
-  sps
+  list(sps=sps, s.pois=s.pois, s.multis=do.call(cbind, s.multis))
 }
 
 # genrate sample from posteior given D
@@ -118,13 +123,15 @@ gen.post.UIP.multi <- function(N, D, Ds, fct=0.5){
   logden <- Dsum*log(MLE) + nDsum*log(1-MLE) 
   den <- exp(logden)
   
-  sps <- gen.prior.UIP.multi(N, Ds, n*fct)
+  all <- gen.prior.UIP.multi(N, Ds, n*fct)
+  sps <- all$sps
   lognums <- Dsum*log(sps) + nDsum*log(1-sps)
   nums <- exp(lognums)
   
   unifs <- runif(N)
   vs <- nums/den
-  sps[vs>=unifs]
+  keepidx <- vs >= unifs
+  list(sps=sps[keepidx], s.pois=all$s.pois[keepidx], s.multis=all$s.multis[, keepidx])
 }
 
 set.seed(3)
@@ -136,8 +143,8 @@ Bern.Simu <- function(jj, p0){
     p0 <- p0 
     # the number of observation in current data
     n <- 50
-    ns <- c(40, 40, 40)
-    ps <- c(0.4, 0.5, 0.6)
+    ns <- c(40, 40)
+    ps <- c(0.45, 0.85)
     iter.res <- list()
 
     # current data
@@ -198,23 +205,25 @@ Bern.Simu <- function(jj, p0){
     iter.res$jpp <- list(mean=post.mean.jpp, CI.eq=CI.eq.jpp, HPD=HPD.jpp)
     
     ## UIP-multi
-    post.sps.UIPm <- gen.post.UIP.multi(50000, D, Ds, fct=0.5)
+    post.sps.UIPm.all <- gen.post.UIP.multi(50000, D, Ds, fct=0.5)
+    post.sps.UIPm <- post.sps.UIPm.all$sps
     low.UIPm <- quantile(post.sps.UIPm, alpha)
     up.UIPm <- quantile(post.sps.UIPm, 1-alpha)
     CI.eq.UIPm <- c(low.UIPm, up.UIPm)
     post.mean.UIPm <- mean(post.sps.UIPm)
     HPD.UIPm <- emp.hpd(post.sps.UIPm)
-    iter.res$UIPm <- list(mean=post.mean.UIPm, CI.eq=CI.eq.UIPm, HPD=HPD.UIPm)
+    iter.res$UIPm <- list(mean=post.mean.UIPm, CI.eq=CI.eq.UIPm, HPD=HPD.UIPm, Ms=post.sps.UIPm.all$s.multis, M=post.sps.UIPm.all$s.pois)
     
     
     ## UIP KL
-    post.sps.UIPkl <- gen.post.UIP.KL(50000, D, Ds, fct=0.5)
+    post.sps.UIPkl.all <- gen.post.UIP.KL(50000, D, Ds, fct=0.5)
+    post.sps.UIPkl <- post.sps.UIPkl.all$sps
     low.UIPkl <- quantile(post.sps.UIPkl, alpha)
     up.UIPkl <- quantile(post.sps.UIPkl, 1-alpha)
     CI.eq.UIPkl <- c(low.UIPkl, up.UIPkl)
     post.mean.UIPkl <- mean(post.sps.UIPkl)
     HPD.UIPkl <- emp.hpd(post.sps.UIPkl)
-    iter.res$UIPkl <- list(mean=post.mean.UIPkl, CI.eq=CI.eq.UIPkl, HPD=HPD.UIPkl)
+    iter.res$UIPkl <- list(mean=post.mean.UIPkl, CI.eq=CI.eq.UIPkl, HPD=HPD.UIPkl, Ms=post.sps.UIPkl.all$s.pois)
 
     iter.res
 }
@@ -222,6 +231,6 @@ Bern.Simu <- function(jj, p0){
 p0 <- 0.3
 Num <- 1000
 
-results <- mclapply(1:Num, Bern.Simu, p0=p0, mc.cores=5)
+results <- mclapply(1:Num, Bern.Simu, p0=p0, mc.cores=20)
 save.name <- paste0("Bern", p0*100, "_Simi_", Num, ".RData")
 save(results, file=save.name)

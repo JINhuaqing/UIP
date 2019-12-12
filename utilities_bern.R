@@ -89,7 +89,7 @@ gen.post.UIP.KL <- function(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000){
     sps.full <- c(sps.full, sps[keepidx])
     s.pois.full <- c(s.pois.full, all$s.pois[keepidx])
     flag <- flag + 1
-    print(c(flag, length(sps.full)))
+    #print(c(flag, length(sps.full)))
     if (flag > Maxiter){
         break()
     }

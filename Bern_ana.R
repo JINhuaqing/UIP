@@ -12,9 +12,9 @@ clean.res <- function(results){
         if (length(result) > 1){
             new.results[[flag]] <- result
             flag <- flag + 1
-        }else{
-#            print(result)
-            print(i)
+        #}else{
+        #    print(result)
+            #print(i)
         }
         i <- i+1
     }
@@ -35,10 +35,10 @@ test.res.f <- function(result, p0){
     res    
 }
 
-load("Bern30_Simi_1000.RData")
+load("Bern50_Simi_1000.RData")
 results <- clean.res(results)
-#te <- sapply(results, function(res)res$UIPm$Ms %>% length)
-#print(te)
+te <- sapply(results, function(res)res$UIPm$Ms %>% length)
+print(results %>% length)
 #asf
 p0 <- 0.5
 
@@ -46,13 +46,12 @@ ress <- lapply(results, function(result)test.res.f(result, p0=p0))
 ress <- do.call(rbind, ress)
 sizes <- 1 - colMeans(ress)
 sizes
-fasdf
 
 fs <- list.files(pattern="*.RData")
 p0 <- 0.5
 flag <- 1
 powerss <- list()
-for (fil in fs[2:3]){
+for (fil in fs){
     load(fil)
     results <- clean.res(results)
     print(length(results))

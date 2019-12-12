@@ -106,6 +106,6 @@ Bern.Simu <- function(jj, p0){
 p0 <- 0.3
 Num <- 1000
 
-results <- mclapply(1:Num, Bern.Simu, p0=p0, mc.cores=20)
+results <- mclapply(1:Num, Bern.Simu, p0=p0, mc.cores=5)
 save.name <- paste0("Bern", p0*100, "_Simi_", Num, ".RData")
 save(results, file=save.name)

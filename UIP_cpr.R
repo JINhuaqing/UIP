@@ -1,5 +1,6 @@
 # compare UIP methods with Jeffrey's prior, uniform prior and full borrowing 
 
+rm(list=ls())
 library(magrittr)
 # To use the hpd function
 library(TeachingDemos) 
@@ -7,133 +8,7 @@ library(TeachingDemos)
 library(extraDistr)
 library(dplyr)
 library(parallel)
-## JPP priors funtions
-gen.conpostp.jpp <- function(D, Ds, gammas){
-  alp <- sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*sum(Ds[[i]])}))
-  bt <- length(D) - sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*(length(Ds[[i]])-sum(Ds[[i]]))}))
-  rbeta(1, shape1=alp, shape2=bt)
-}
-
-gen.conpostga.jpp <- function(n, p, Dh){
-  a <- sum(Dh)
-  b <- length(Dh) - sum(Dh)
-  unisps <- runif(n)
-  den <- b*log(1-p) + a*log(p)
-  num <- log(1+((1-p)^b*p^a-1)*unisps)
-  num/den
-}
-
-gen.post.jpp <- function(N, D, Ds, burnin=5000){
-  flag <- 0
-  sps <- vector()
-  gammass <- list()
-  p <- 0.1
-  for (i in 1:N){
-    gammas <- sapply(Ds, function(Dh){gen.conpostga.jpp(1, p, Dh)})
-    p <- gen.conpostp.jpp(D, Ds, gammas)
-    if (i > burnin){
-      sps <- c(sps, p)
-      gammass[[i-burnin]] <- gammas
-    }
-  }
-  list(sps=sps, gam=gammass)
-}
-
-# UIP-KL prior functions
-# compute the KL divergence of beta ditributions with para1 and para2
-# KL(beta(para1)||beta(para2))
-KL.dist.beta <- function(para1, para2){
-  a1 <- para1[1]
-  b1 <- para1[2]
-  a2 <- para2[1]
-  b2 <- para2[2]
-  sps <- rbeta(10000, shape1=a1, shape2=b1)
-  itm1 <- (a1-a2)*mean(log(sps)) 
-  itm2 <- (b1-b2)*mean(log(1-sps)) 
-  itm3 <- - log(beta(a1, b1)/beta(a2, b2))
-  itm1 + itm2 + itm3
-}
-
-# generate prior from UIP-KL prior
-gen.prior.UIP.KL <- function(N, D, Ds, lam){
-  paras <- lapply(Ds, function(Dh)c(1+sum(Dh), 1+length(Dh)-sum(Dh)))
-  para0 <- c(1+sum(D), 1+length(D)-sum(D))
-  ms <- lapply(paras, function(para){KL.dist.beta(para, para0)}) %>% do.call(c, args=.)
-  ms <- 1/ms
-  s.pois <- rtpois(N, lambda=lam, a=0, b=2*lam)
-  Mss <- lapply(s.pois, function(s.poi){ms*s.poi/sum(ms)})
-  sps <- lapply(Mss, function(Ms){paras <- cond.prior(Ds, Ms); rbeta(1, shape1=paras[1], shape2=paras[2])})
-  #sps <- lapply(Mss, function(Ms){paras <- cond.prior(Ds, Ms); x = rbeta(1, shape1=paras[1], shape2=paras[2]); if(is.na(x))print(c(Ms, paras, x)); x})
-  sps <- do.call(c, sps)
-  list(sps=sps, s.pois=s.pois)
-}
-
-# genrate sample from posteior given D with UPDKL
-gen.post.UIP.KL <- function(N, D, Ds, fct=0.5){
-  MLE <- mean(D)
-  n <- length(D)
-  Dsum <- sum(D)
-  nDsum <- n - Dsum
-  
-  logden <- Dsum*log(MLE) + nDsum*log(1-MLE) 
-  den <- exp(logden)
-  
-  all <- gen.prior.UIP.KL(N, D, Ds, n*fct)
-  sps <- all$sps
-  lognums <- Dsum*log(sps) + nDsum*log(1-sps)
-  nums <- exp(lognums)
-  
-  unifs <- runif(N)
-  vs <- nums/den
-  keepidx <- vs >= unifs
-  list(sps=sps[keepidx], s.pois=all$s.pois[keepidx])
-}
-
-# UIP-M prior functions
-# compute corresponding (alpha, beta) given M1, M2, M3
-cond.prior <- function(Ds, Ms){
-  M <- sum(Ms)
-  MLEs <- lapply(Ds, function(Dh){mean(Dh)}) %>% do.call(c, args=.)
-  av <- sum(Ms*MLEs)/M
-  Is <- 1/(MLEs*(1-MLEs))
-  bv <- 1/sum(Ms*Is)
-  alpha <- av * (av*(1-av)/bv - 1)
-  beta <- (1-av) * (av*(1-av)/bv - 1)
-  #if (alpha < 0) print(c(av, bv))
-  return(c(alpha, beta))
-}
-
-# generate sample from prior 
-gen.prior.UIP.multi <- function(N, Ds, lam){
-  numDs <- length(Ds)
-  s.pois <- rtpois(N, lambda=lam, a=0, b=2*lam)
-  s.multis <- lapply(s.pois, function(x)rmultinom(1, size=x, rep(1, numDs)/numDs))
-  sps <- lapply(s.multis, function(Ms){paras <- cond.prior(Ds, Ms); rbeta(1, shape1=paras[1], shape2=paras[2])})
-  sps <- do.call(c, sps)
-  list(sps=sps, s.pois=s.pois, s.multis=do.call(cbind, s.multis))
-}
-
-# genrate sample from posteior given D
-gen.post.UIP.multi <- function(N, D, Ds, fct=0.5){
-  MLE <- mean(D)
-  n <- length(D)
-  Dsum <- sum(D)
-  nDsum <- n - Dsum
-  
-  logden <- Dsum*log(MLE) + nDsum*log(1-MLE) 
-  den <- exp(logden)
-  
-  all <- gen.prior.UIP.multi(N, Ds, n*fct)
-  sps <- all$sps
-  lognums <- Dsum*log(sps) + nDsum*log(1-sps)
-  nums <- exp(lognums)
-  
-  unifs <- runif(N)
-  vs <- nums/den
-  keepidx <- vs >= unifs
-  list(sps=sps[keepidx], s.pois=all$s.pois[keepidx], s.multis=all$s.multis[, keepidx])
-}
-
+source("utilities_bern.R")
 set.seed(3)
 # Run simulatio for UIP project 
 # Bernulli distrubution
@@ -205,7 +80,7 @@ Bern.Simu <- function(jj, p0){
     iter.res$jpp <- list(mean=post.mean.jpp, CI.eq=CI.eq.jpp, HPD=HPD.jpp)
     
     ## UIP-multi
-    post.sps.UIPm.all <- gen.post.UIP.multi(50000, D, Ds, fct=0.5)
+    post.sps.UIPm.all <- gen.post.UIP.multi(10000, D, Ds, fct=0.5)
     post.sps.UIPm <- post.sps.UIPm.all$sps
     low.UIPm <- quantile(post.sps.UIPm, alpha)
     up.UIPm <- quantile(post.sps.UIPm, 1-alpha)
@@ -216,7 +91,7 @@ Bern.Simu <- function(jj, p0){
     
     
     ## UIP KL
-    post.sps.UIPkl.all <- gen.post.UIP.KL(50000, D, Ds, fct=0.5)
+    post.sps.UIPkl.all <- gen.post.UIP.KL(10000, D, Ds, fct=0.5)
     post.sps.UIPkl <- post.sps.UIPkl.all$sps
     low.UIPkl <- quantile(post.sps.UIPkl, alpha)
     up.UIPkl <- quantile(post.sps.UIPkl, 1-alpha)

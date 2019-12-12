@@ -1,6 +1,6 @@
 library(magrittr)
 rm(list=ls())
-#setwd("C:/Users/Dell/Google Drive/multi-computers_folder/projects/UIP")
+setwd("C:/Users/Dell/Google Drive/multi-computers_folder/projects/UIP")
 
 
 
@@ -12,9 +12,9 @@ clean.res <- function(results){
         if (length(result) > 1){
             new.results[[flag]] <- result
             flag <- flag + 1
-        #}else{
-        #    print(result)
-            #print(i)
+        }else{
+            #print(result)
+            print(i)
         }
         i <- i+1
     }
@@ -35,12 +35,12 @@ test.res.f <- function(result, p0){
     res    
 }
 
-load("Bern50_Simi_1000.RData")
+load("Bern40_Simi_1000.RData")
 results <- clean.res(results)
 te <- sapply(results, function(res)res$UIPm$Ms %>% length)
 print(results %>% length)
 #asf
-p0 <- 0.5
+p0 <- 0.4
 
 ress <- lapply(results, function(result)test.res.f(result, p0=p0))
 ress <- do.call(rbind, ress)
@@ -48,7 +48,8 @@ sizes <- 1 - colMeans(ress)
 sizes
 
 fs <- list.files(pattern="*.RData")
-p0 <- 0.5
+fs <- fs[-c(1, 2, 3)]
+p0 <- 0.4
 flag <- 1
 powerss <- list()
 for (fil in fs){
@@ -76,3 +77,12 @@ non <- lapply(results, function(res){res$non$mean}) %>%
     do.call(rbind, args=.)
 UIPkl <- lapply(results, function(res){res$UIPkl$mean}) %>%
     do.call(rbind, args=.)
+
+load("Bern75_Simi_1000.RData")
+results <- clean.res(results)
+Mss <- sapply(results, function(res)res$UIPm$Ms)
+tmp.f <- function(Ms){do.call(cbind, Ms) %>% rowMeans()}
+Ms.means <- lapply(Mss, tmp.f)
+Ms.means <- Ms.means %>% do.call(rbind, args=.)
+boxplot(Ms.means, xaxt="n", ylim=c(0, 20))
+axis(1, c(1, 2), c("p=0.45", "p=0.85"))

@@ -143,7 +143,7 @@ gen.post.UIP.multi <- function(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000){
     lognums <- Dsum*log(sps) + nDsum*log(1-sps)
     nums <- exp(lognums)
     unifs <- runif(Ns)
-    vs <- nums/den
+    vs <- nums/den # +1 for debug
     keepidx <- vs >= unifs
     
     sps.full <- c(sps.full, sps[keepidx])

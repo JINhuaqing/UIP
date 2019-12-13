@@ -1,6 +1,6 @@
 library(magrittr)
 rm(list=ls())
-setwd("C:/Users/Dell/Google Drive/multi-computers_folder/projects/UIP")
+#setwd("C:/Users/Dell/Google Drive/multi-computers_folder/projects/UIP")
 
 
 
@@ -13,7 +13,7 @@ clean.res <- function(results){
             new.results[[flag]] <- result
             flag <- flag + 1
         }else{
-            #print(result)
+            print(result)
             print(i)
         }
         i <- i+1
@@ -35,11 +35,11 @@ test.res.f <- function(result, p0){
     res    
 }
 
-load("Bern40_Simi_1000.RData")
+load("Bern85_Simi_1000.RData")
 results <- clean.res(results)
 te <- sapply(results, function(res)res$UIPm$Ms %>% length)
 print(results %>% length)
-#asf
+asf
 p0 <- 0.4
 
 ress <- lapply(results, function(result)test.res.f(result, p0=p0))

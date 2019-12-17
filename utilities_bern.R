@@ -113,6 +113,7 @@ cond.prior <- function(Ds, Ms){
 }
 
 
+
 # generate sample from prior 
 gen.prior.UIP.multi <- function(N, Ds, lam){
   numDs <- length(Ds)

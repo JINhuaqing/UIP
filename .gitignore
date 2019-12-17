@@ -1,3 +1,5 @@
 *.pdf
 *.RData
 tmp.*
+__pycache__
+*.pkl

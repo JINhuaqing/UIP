@@ -4,7 +4,13 @@ from scipy.stats import bernoulli
 import scipy.stats as ss
 import pymc3.stats as pymcs
 import pickle
+import argparse
 np.random.seed(0)
+
+parser = argparse.ArgumentParser(description='UIP Bernoulli')
+parser.add_argument('-p0', type=float, default=0.4, help='successful probability of current data')
+
+args = parser.parse_args()
 
 
 def popu_beta(alp, bt, cutoff):
@@ -25,11 +31,12 @@ def samp_beta(sps, cutoff):
 
 Num = 1000
 results = []
-p0 = 0.05
+p0 = args.p0
 n = 50
 ps = [0.3, 0.8]
 ns = [40, 40]
 cutoff = 0.025
+print(f"The p0 is {p0}.")
 
 for jj in range(Num):
     result = {}
@@ -44,7 +51,6 @@ for jj in range(Num):
                       } 
 
    
-    print(f"The iteration {jj+1}/{Num}")
     # Jeffrey prior  
     alp_jef = 0.5 + D.sum()
     bt_jef = 0.5 + len(D) - D.sum()
@@ -64,16 +70,29 @@ for jj in range(Num):
 
     #UIP-KL
     post_sps_UIPKL = gen_post_UIP_KL(10000, D, Ds)
-    res_UIPKL = samp_beta(post_sps_UIPKL["sps"], cutoff=cutoff)
+    try:
+        res_UIPKL = samp_beta(post_sps_UIPKL["sps"], cutoff=cutoff)
+    except Exception as e:
+        res_UIPKL = {}
+        print(e)
     result["UIPKL"] = res_UIPKL
     result["UIPKL_sps"] = post_sps_UIPKL
 
     #UIP-multi
     post_sps_UIPm = gen_post_UIP_multi(10000, D, Ds)
-    res_UIPm = samp_beta(post_sps_UIPm["sps"], cutoff=cutoff)
+    try:
+        res_UIPm = samp_beta(post_sps_UIPm["sps"], cutoff=cutoff)
+    except Exception as e:
+        res_UIPm = {}
+        print(e)
     result["UIPm"] = res_UIPm
     result["UIPm_sps"] = post_sps_UIPm
 
+
+    print(f"The iteration {jj+1}/{Num}."
+          f"Number of samples for UIPKL is {len(post_sps_UIPKL['sps'])}." 
+          f"Number of samples for UIPm is {len(post_sps_UIPm['sps'])}." 
+        )
     results.append(result)
 
 with open(f"Bern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:

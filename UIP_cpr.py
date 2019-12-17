@@ -25,7 +25,7 @@ def samp_beta(sps, cutoff):
 
 Num = 1000
 results = []
-p0 = 0.3
+p0 = 0.05
 n = 50
 ps = [0.3, 0.8]
 ns = [40, 40]

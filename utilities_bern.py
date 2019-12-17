@@ -72,6 +72,7 @@ def gen_post_UIP_KL(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000):
     flag = 1
 
     while len(sps_full) <= N:
+        #print(len(sps_full), flag)
         allsps = gen_prior_UIP_KL(Ns, D, Ds, n*fct)
         sps = allsps["sps"]
         lognums = Dsum * np.log(sps) + nDsum * np.log(1-sps)
@@ -110,6 +111,7 @@ def gen_post_UIP_multi(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000):
     flag = 1
 
     while len(sps_full) <= N:
+        #print(len(sps_full), flag)
         allsps = gen_prior_UIP_multi(Ns, Ds, n*fct)
         sps = allsps["sps"]
         lognums = Dsum * np.log(sps) + nDsum * np.log(1-sps)

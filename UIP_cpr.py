@@ -69,20 +69,22 @@ for jj in range(Num):
     result["jpp"] = res_jpp
 
     #UIP-KL
-    post_sps_UIPKL = gen_post_UIP_KL(10000, D, Ds)
     try:
+        post_sps_UIPKL = gen_post_UIP_KL(10000, D, Ds)
         res_UIPKL = samp_beta(post_sps_UIPKL["sps"], cutoff=cutoff)
     except Exception as e:
+        post_sps_UIPKL = {"sps": []}
         res_UIPKL = {}
         print(e)
     result["UIPKL"] = res_UIPKL
     result["UIPKL_sps"] = post_sps_UIPKL
 
     #UIP-multi
-    post_sps_UIPm = gen_post_UIP_multi(10000, D, Ds)
     try:
+        post_sps_UIPm = gen_post_UIP_multi(10000, D, Ds)
         res_UIPm = samp_beta(post_sps_UIPm["sps"], cutoff=cutoff)
     except Exception as e:
+        post_sps_UIPm = {"sps": []}
         res_UIPm = {}
         print(e)
     result["UIPm"] = res_UIPm

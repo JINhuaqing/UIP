@@ -45,13 +45,12 @@ def rejrate(p0, data):
     return ress
 
 
-
 # sort the files
 files = sorted(files, key=sortf, reverse=False)
 for pklfile in files:
     data = load_pkl(pklfile)
     data = [dat for dat in data if is_valid(dat)]
     p = sortf(pklfile)/100
-    print(rejrate(0.3, data))
+    print(p, rejrate(0.3, data))
 
 

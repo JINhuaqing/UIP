@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as npr
 from scipy.special import beta as Beta
-from scipy.stats import poisson, uniform, multinomial, dirichlet
+from scipy.stats import poisson, uniform, multinomial, dirichlet, gamma
 
 
 # compute the log rejecting probability for IMH
@@ -66,6 +66,7 @@ def gen_prior_UIP_KL(N, D, Ds, lam):
     ms = np.array([JS_dist_beta(para0, para) for para in paras])
     ms = 1 / (ms + 1e-10) # add 1e-10 to avoid 0 
     sps_poi = gen_trunc_pois(N, lam, 0, 2*lam)
+    #sps_poi = gamma.rvs(a=lam, size=N)
     Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_poi]
     condpriors = [cond_prior(Ds, Ms) for Ms in Mss]
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
@@ -131,6 +132,7 @@ def gen_post_UIP_KL_MCMC(N, D, Ds, fct=0.5, burnin=5000, thin=10, diag=False):
 def gen_prior_UIP_multi(N, Ds, lam):
     numDs = len(Ds)
     sps_poi = gen_trunc_pois(N, lam, 0, 2*lam)
+    #sps_poi = gamma.rvs(a=lam, size=N)
     sps_mul = [multinomial.rvs(sp_poi, np.ones(numDs)/numDs, 1)[0] for sp_poi in sps_poi] # use multinomial distribution for Mi
     condpriors = [cond_prior(Ds, sp_mul) for sp_mul in sps_mul] 
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
@@ -140,6 +142,7 @@ def gen_prior_UIP_multi(N, Ds, lam):
 def gen_prior_UIP_D(N, Ds, lam):
     numDs = len(Ds)
     sps_poi = gen_trunc_pois(N, lam, 0, 2*lam)
+    #sps_poi = gamma.rvs(a=lam, size=N)
     sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_poi] # use dirichlet distribution for Mi
     condpriors = [cond_prior(Ds, sp_m) for sp_m in sps_m] 
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]

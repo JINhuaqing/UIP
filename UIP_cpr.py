@@ -32,8 +32,8 @@ def samp_beta(sps, cutoff):
 Num = 1000
 results = []
 p0 = args.p0
-n = 50
-ps = [0.3, 0.8]
+n = 60
+ps = [0.25, 0.4]
 ns = [40, 40]
 cutoff = 0.025
 print(f"The p0 is {p0}.")
@@ -81,7 +81,7 @@ for jj in range(Num):
 
     #UIP-multi
     try:
-        post_sps_UIPm = gen_post_UIP_multi(10000, D, Ds)
+        post_sps_UIPm = gen_post_UIP_D(10000, D, Ds)
         res_UIPm = samp_beta(post_sps_UIPm["sps"], cutoff=cutoff)
     except Exception as e:
         post_sps_UIPm = {"sps": []}

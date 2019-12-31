@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import seaborn as sns
+import pprint
+import pandas as pd
 
 
 root = Path("./")
@@ -46,11 +48,23 @@ def rejrate(p0, data):
 
 
 # sort the files
+powers = []
 files = sorted(files, key=sortf, reverse=False)
-for pklfile in files:
+for pklfile in files[:-2]:
     data = load_pkl(pklfile)
-    data = [dat for dat in data if is_valid(dat)]
+    #pprint.pprint(data[0])
+    data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPm"]) != 0]
     p = sortf(pklfile)/100
-    print(p, rejrate(0.3, data))
+    res = rejrate(0.3, data)
+    if p == 0.3:
+        size = res
+    else:
+        powers.append(res) 
+powers = pd.DataFrame(powers)
+
+print(f"Powers")
+print(powers.mean(axis=0))
+print("Size")
+pprint.pprint(size)
 
 

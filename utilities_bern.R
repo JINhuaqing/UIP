@@ -5,8 +5,8 @@ library(extraDistr)
 
 ## JPP priors funtions
 gen.conpostp.jpp <- function(D, Ds, gammas){
-  alp <- sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*sum(Ds[[i]])}))
-  bt <- length(D) - sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*(length(Ds[[i]])-sum(Ds[[i]]))}))
+  alp <- sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*sum(Ds[[i]])})) + 1
+  bt <- length(D) - sum(D) + sum(sapply(1:length(Ds), function(i){gammas[i]*(length(Ds[[i]])-sum(Ds[[i]]))})) + 1
   rbeta(1, shape1=alp, shape2=bt)
 }
 

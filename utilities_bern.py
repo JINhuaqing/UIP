@@ -214,8 +214,8 @@ def gen_post_UIP_D_MCMC(N, D, Ds, fct=0.5, burnin=5000, thin=10, diag=False):
 ## JPP priors funtions
 def gen_conpostp_jpp(D, Ds, gammas):
     nDs = len(Ds)
-    alp = np.sum(D) + np.sum([gammas[i]*np.sum(Ds[i]) for i in range(nDs)])
-    bt = len(D) - np.sum(D) + np.sum([gammas[i]*(len(Ds[i]) - np.sum(Ds[i])) for i in range(nDs)])
+    alp = np.sum(D) + np.sum([gammas[i]*np.sum(Ds[i]) for i in range(nDs)]) + 1
+    bt = len(D) - np.sum(D) + np.sum([gammas[i]*(len(Ds[i]) - np.sum(Ds[i])) for i in range(nDs)]) + 1
     return npr.beta(alp, bt, 1)
 
 def gen_conpostga_jpp(n, p, Dh):

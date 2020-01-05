@@ -56,21 +56,24 @@ for jj in range(Num):
     bt_jef = 0.5 + len(D) - D.sum()
     res_jef = popu_beta(alp_jef, bt_jef, cutoff=cutoff)
     result["jef"] = res_jef
+    result["jef_popu"] = [alp_jef, bt_jef]
 
     # full borrowing 
     alp_full = 0.5 + D.sum() + np.sum([Dh.sum() for Dh in Ds])
     bt_full = 0.5 + len(D) - D.sum() + np.sum([len(Dh) - Dh.sum() for Dh in Ds])
     res_full = popu_beta(alp_full, bt_full, cutoff=cutoff)
     result["full"] = res_full
+    result["full_popu"] = [alp_full, bt_full]
 
     # JPP  
     post_sps_jpp = gen_post_jpp(10000, D, Ds)
     res_jpp = samp_beta(post_sps_jpp["sps"], cutoff=cutoff)
     result["jpp"] = res_jpp
+    result["jpp_sps"] = post_sps_jpp
 
     #UIP-KL
     try:
-        post_sps_UIPKL = gen_post_UIP_KL(10000, D, Ds)
+        post_sps_UIPKL = gen_post_UIP_KL_MCMC(40000, D, Ds, burnin=10000, thin=20)
         res_UIPKL = samp_beta(post_sps_UIPKL["sps"], cutoff=cutoff)
     except Exception as e:
         post_sps_UIPKL = {"sps": []}
@@ -81,21 +84,21 @@ for jj in range(Num):
 
     #UIP-multi
     try:
-        post_sps_UIPm = gen_post_UIP_D(10000, D, Ds)
-        res_UIPm = samp_beta(post_sps_UIPm["sps"], cutoff=cutoff)
+        post_sps_UIPD = gen_post_UIP_D_MCMC(40000, D, Ds, burnin=10000, thin=20)
+        res_UIPD = samp_beta(post_sps_UIPD["sps"], cutoff=cutoff)
     except Exception as e:
-        post_sps_UIPm = {"sps": []}
-        res_UIPm = {}
+        post_sps_UIPD = {"sps": []}
+        res_UIPD = {}
         print(e)
-    result["UIPm"] = res_UIPm
-    result["UIPm_sps"] = post_sps_UIPm
+    result["UIPD"] = res_UIPD
+    result["UIPD_sps"] = post_sps_UIPD
 
 
     print(f"The iteration {jj+1}/{Num}."
           f"Number of samples for UIPKL is {len(post_sps_UIPKL['sps'])}." 
-          f"Number of samples for UIPm is {len(post_sps_UIPm['sps'])}." 
+          f"Number of samples for UIPm is {len(post_sps_UIPD['sps'])}." 
         )
     results.append(result)
 
-with open(f"Bern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
+with open(f"MCMCBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
     pickle.dump(results, f)

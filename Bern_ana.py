@@ -5,11 +5,8 @@ from pathlib import Path
 import seaborn as sns
 import pprint
 import pandas as pd
-
-
-root = Path("./")
-files = root.glob("*.pkl")
-files = list(files)
+from scipy.stats import beta
+from pprint import pprint
 
 
 def sortf(f):
@@ -30,13 +27,17 @@ def is_valid(dat, num=1000):
     return (numsps1 > num) and (numsps2 > num)
 
 
-def is_true(p0, dat, method):
-    res = dat[method]
-    low, up = res["eq"]
+def is_true(p0, method=None, dat=None, bs=None):
+    assert (dat is None) + (bs is None) == 1
+    if dat is not None:
+        res = dat[method]
+        low, up = res["eq"]
+    else:
+        low, up = bs
     return (p0 > low) and (p0 < up)
 
 
-def rejrate(p0, data):
+def rejrates(p0, data):
     ress = {"jef":[], "full":[], "jpp":[], "UIPKL":[], "UIPm":[]}
     for dat in data:
         for method in ress.keys():
@@ -46,25 +47,96 @@ def rejrate(p0, data):
         ress[keyv] = 1 - np.mean(reslist)
     return ress
 
+def rejrate(p0, data, q):
+    if len(data[0]) > 2:
+        reslist = [is_true(p0, bs=[np.quantile(dat, q=q), np.quantile(dat, q=1-q)]) for dat in data] 
+    else:
+        reslist = [is_true(p0, bs=[beta.ppf(q=q, a=dat[0], b=dat[1]), beta.ppf(q=1-q, a=dat[0], b=dat[1])]) for dat in data] 
+    return 1 - np.mean(reslist)
+
+
+def getRatio(p0, data=None, para=None):
+    assert (data is None) + (para is None) == 1
+    if para is not None:
+        a, b = para
+        rv = beta(a=a, b=b)
+        res = np.min([rv.cdf(p0), rv.sf(p0)])
+    if data is not None:
+        p1 = np.mean(data<=p0)
+        p2 = np.mean(data>p0)
+        res = np.min([p1, p2])
+    return res
+
+
+
+def getQuantile(p0, data=None, paras=None, alp=0.05):
+    assert (data is None) + (paras is None) == 1
+    if paras is not None:
+        res = [getRatio(p0, para=para) for para in paras]
+    if data is not None:
+        res = [getRatio(p0, data=dat) for dat in data]
+    #print(np.sort(res))
+    return np.quantile(res, q=alp)
+
+
+root = Path("./MCMC500/")
+files = root.glob("*.pkl")
+files = list(files)
+
+# test p = p0
+idxs = [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6]
+p0 = 0.6
 
 # sort the files
 powers = []
 files = sorted(files, key=sortf, reverse=False)
-for pklfile in files[:-2]:
+f = files[idxs.index(p0)]
+
+# get the calibrated quantile
+data = load_pkl(f)
+JEFdata = [dat["jef_popu"] for dat in data]
+fulldata = [dat["full_popu"] for dat in data]
+UIPDdata = [dat["UIPD_sps"]["sps"]  for dat in data]
+UIPKLdata = [dat["UIPKL_sps"]["sps"]  for dat in data]
+JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
+
+UIPDq = getQuantile(p0, data=UIPDdata)
+UIPKLq = getQuantile(p0, data=UIPKLdata)
+JPPq = getQuantile(p0, data=JPPdata)
+JEFq = getQuantile(p0, paras=JEFdata)
+fullq = getQuantile(p0, paras=fulldata)
+JEFq = JEFq * 0.90
+#UIPDq = UIPDq * 1.05
+print(UIPDq, JPPq, UIPKLq, JEFq, fullq)
+
+for pklfile in files:
     data = load_pkl(pklfile)
-    #pprint.pprint(data[0])
-    data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPm"]) != 0]
+    data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPD"]) != 0]
+    JEFdata = [dat["jef_popu"] for dat in data]
+    fulldata = [dat["full_popu"] for dat in data]
+    UIPDdata = [dat["UIPD_sps"]["sps"]  for dat in data]
+    UIPKLdata = [dat["UIPKL_sps"]["sps"]  for dat in data]
+    JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
+
     p = sortf(pklfile)/100
-    res = rejrate(0.3, data)
-    if p == 0.3:
+    print(p)
+    res = {
+            "UIPD": rejrate(p0, UIPDdata, q=UIPDq),
+            "UIPKL": rejrate(p0, UIPKLdata, q=UIPKLq),
+            "JPP": rejrate(p0, JPPdata, q=JPPq),
+            "jef": rejrate(p0, JEFdata, q=JEFq),
+            "full": rejrate(p0, fulldata, q=fullq),
+            }
+    if p == p0:
         size = res
     else:
         powers.append(res) 
 powers = pd.DataFrame(powers)
+print(powers)
 
 print(f"Powers")
 print(powers.mean(axis=0))
 print("Size")
-pprint.pprint(size)
+pprint(size)
 
 

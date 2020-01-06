@@ -66,14 +66,14 @@ for jj in range(Num):
     result["full_popu"] = [alp_full, bt_full]
 
     # JPP  
-    post_sps_jpp = gen_post_jpp(10000, D, Ds)
+    post_sps_jpp = gen_post_jpp(1000, D, Ds)
     res_jpp = samp_beta(post_sps_jpp["sps"], cutoff=cutoff)
     result["jpp"] = res_jpp
     result["jpp_sps"] = post_sps_jpp
 
     #UIP-KL
     try:
-        post_sps_UIPKL = gen_post_UIP_KL_MCMC(40000, D, Ds, burnin=10000, thin=20)
+        post_sps_UIPKL = gen_post_UIP_KL_MCMC(15000, D, Ds, burnin=5000, thin=10)
         res_UIPKL = samp_beta(post_sps_UIPKL["sps"], cutoff=cutoff)
     except Exception as e:
         post_sps_UIPKL = {"sps": []}
@@ -84,7 +84,7 @@ for jj in range(Num):
 
     #UIP-multi
     try:
-        post_sps_UIPD = gen_post_UIP_D_MCMC(40000, D, Ds, burnin=10000, thin=20)
+        post_sps_UIPD = gen_post_UIP_D_MCMC(15000, D, Ds, burnin=5000, thin=10)
         res_UIPD = samp_beta(post_sps_UIPD["sps"], cutoff=cutoff)
     except Exception as e:
         post_sps_UIPD = {"sps": []}

@@ -60,32 +60,33 @@ def gen_trunc_pois(N, lam, low, up):
 
 
 # generate prior from UIP-KL prior
-def gen_prior_UIP_KL(N, D, Ds, lam):
+def gen_prior_UIP_KL(N, D, Ds):
+    ntotal = np.sum([len(Dh) for Dh in Ds])
     paras = [[1+np.sum(Dh), 1+len(Dh)-np.sum(Dh)] for Dh in Ds]
     para0 = [1+np.sum(D), 1+len(D)-np.sum(D)]
     ms = np.array([JS_dist_beta(para0, para) for para in paras])
     ms = 1 / (ms + 1e-10) # add 1e-10 to avoid 0 
-    sps_poi = gen_trunc_pois(N, lam, 0, 2*lam)
-    #sps_poi = gamma.rvs(a=lam, size=N)
-    Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_poi]
+    # sps_M = gen_trunc_pois(N, lam, 0, 2*lam) # truncated poisson is not suitable
+    sps_M = ntotal * uniform.rvs(size=N, loc=1/ntotal, scale=1-1/ntotal)
+    Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_M]
     condpriors = [cond_prior(Ds, Ms) for Ms in Mss]
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
     sps = np.array(sps)
-    return {"sps": sps, "sps_poi": sps_poi}
+    return {"sps": sps, "sps_M": sps_M}
 
 
 # genrate sample from posteior given D with UPDKL
-def gen_post_UIP_KL(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000):
+def gen_post_UIP_KL(N, D, Ds, Maxiter=50, Ns=10000):
     MLE, n, Dsum, nDsum = np.mean(D), len(D), np.sum(D), len(D) - np.sum(D)
     logden = Dsum * np.log(MLE) + nDsum * np.log(1-MLE)
     den = np.exp(logden)
     sps_full = []
-    sps_poi_full = []
+    sps_M_full = []
     flag = 1
 
     while len(sps_full) <= N:
         #print(len(sps_full), flag)
-        allsps = gen_prior_UIP_KL(Ns, D, Ds, n*fct)
+        allsps = gen_prior_UIP_KL(Ns, D, Ds)
         sps = allsps["sps"]
         lognums = Dsum * np.log(sps) + nDsum * np.log(1-sps)
         nums = np.exp(lognums)
@@ -94,23 +95,23 @@ def gen_post_UIP_KL(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000):
         vs = nums/den
         keepidx = vs >= usps
         sps_full = sps_full + list(sps[keepidx])
-        sps_poi_full = sps_poi_full + list(allsps["sps_poi"][keepidx])
+        sps_M_full = sps_M_full + list(allsps["sps_M"][keepidx])
         flag += 1
         if flag > Maxiter:
             break
-    return {"sps": np.array(sps_full), "sps_poi": np.array(sps_poi_full)}
+    return {"sps": np.array(sps_full), "sps_M": np.array(sps_M_full)}
 
 
-def gen_post_UIP_KL_MCMC(N, D, Ds, fct=0.5, burnin=5000, thin=10, diag=False):
+def gen_post_UIP_KL_MCMC(N, D, Ds, burnin=5000, thin=10, diag=False):
     n = len(D)
     sps_full = []
-    sps_poi_full = []
+    sps_M_full = []
     spsX = {'sps': np.array([0.5]), 
-            'sps_poi': np.array([25])}
+            'sps_M': np.array([25])}
 
     for i in range(N):
         thetax = spsX['sps'][0]
-        spsY = gen_prior_UIP_KL(1, D, Ds, fct*n)
+        spsY = gen_prior_UIP_KL(1, D, Ds)
         thetay = spsY['sps'][0]
         logaccp = logAccProb(thetay, thetax, D)
         ru = uniform.rvs(loc=0, scale=1, size=1)[0]
@@ -118,50 +119,53 @@ def gen_post_UIP_KL_MCMC(N, D, Ds, fct=0.5, burnin=5000, thin=10, diag=False):
         if logru <= logaccp:
             spsX = spsY
         sps_full.append(spsX['sps'][0])
-        sps_poi_full.append(spsX['sps_poi'][0])
+        sps_M_full.append(spsX['sps_M'][0])
         
     sps_full = np.array(sps_full)
-    sps_poi_full = np.array(sps_poi_full)
+    sps_M_full = np.array(sps_M_full)
     if diag:
-        return {"sps": sps_full, "sps_poi": sps_poi_full}
+        return {"sps": sps_full, "sps_M": sps_M_full}
     else:
-        return {"sps": sps_full[burnin::thin], "sps_poi": sps_poi_full[burnin::thin]}
+        return {"sps": sps_full[burnin::thin], "sps_M": sps_M_full[burnin::thin]}
 
 ## UIP-M prior functions
 # generate sample from prior 
 def gen_prior_UIP_multi(N, Ds, lam):
+    ntotal = np.sum([len(Dh) for Dh in Ds])
     numDs = len(Ds)
-    sps_poi = gen_trunc_pois(N, lam, 0, 2*lam)
-    #sps_poi = gamma.rvs(a=lam, size=N)
-    sps_mul = [multinomial.rvs(sp_poi, np.ones(numDs)/numDs, 1)[0] for sp_poi in sps_poi] # use multinomial distribution for Mi
+    #sps_M = gen_trunc_pois(N, lam, 0, 2*lam)
+    sps_M = ntotal * uniform.rvs(size=N, loc=1/ntotal, scale=1-1/ntotal)
+    sps_mul = [multinomial.rvs(sp_poi, np.ones(numDs)/numDs, 1)[0] for sp_poi in sps_M] # use multinomial distribution for Mi
     condpriors = [cond_prior(Ds, sp_mul) for sp_mul in sps_mul] 
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
     sps, sps_mul = np.array(sps), np.array(sps_mul)
-    return {"sps": sps, "sps_poi": sps_poi, "sps_mul": sps_mul}
+    return {"sps": sps, "sps_M": sps_M, "sps_mul": sps_mul}
 
-def gen_prior_UIP_D(N, Ds, lam):
+def gen_prior_UIP_D(N, Ds):
+    ntotal = np.sum([len(Dh) for Dh in Ds])
     numDs = len(Ds)
-    sps_poi = gen_trunc_pois(N, lam, 0, 2*lam)
-    #sps_poi = gamma.rvs(a=lam, size=N)
-    sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_poi] # use dirichlet distribution for Mi
+    #sps_M = gen_trunc_pois(N, lam, 0, 2*lam)
+    sps_M = ntotal * uniform.rvs(size=N, loc=1/ntotal, scale=1-1/ntotal)
+    #sps_M = gamma.rvs(a=lam, size=N)
+    sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_M] # use dirichlet distribution for Mi
     condpriors = [cond_prior(Ds, sp_m) for sp_m in sps_m] 
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
     sps, sps_m = np.array(sps), np.array(sps_m)
-    return {"sps": sps, "sps_poi": sps_poi, "sps_m": sps_m}
+    return {"sps": sps, "sps_M": sps_M, "sps_m": sps_m}
 
 # genrate sample from posteior given D by rejection sampling
-def gen_post_UIP_D(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000):
+def gen_post_UIP_D(N, D, Ds, Maxiter=50, Ns=10000):
     MLE, n, Dsum, nDsum = np.mean(D), len(D), np.sum(D), len(D) - np.sum(D)
     logden = Dsum * np.log(MLE) + nDsum * np.log(1-MLE)
     den = np.exp(logden)
     sps_full = []
-    sps_poi_full = []
+    sps_M_full = []
     sps_m_full = []
     flag = 1
 
     while len(sps_full) <= N:
         #print(len(sps_full), flag)
-        allsps = gen_prior_UIP_D(Ns, Ds, n*fct)
+        allsps = gen_prior_UIP_D(Ns, Ds)
         sps = allsps["sps"]
         lognums = Dsum * np.log(sps) + nDsum * np.log(1-sps)
         nums = np.exp(lognums)
@@ -170,26 +174,26 @@ def gen_post_UIP_D(N, D, Ds, fct=0.5, Maxiter=50, Ns=10000):
         vs = nums/den
         keepidx = vs >= usps
         sps_full = sps_full + list(sps[keepidx])
-        sps_poi_full = sps_poi_full + list(allsps["sps_poi"][keepidx])
+        sps_M_full = sps_M_full + list(allsps["sps_M"][keepidx])
         sps_m_full = sps_m_full + list(allsps["sps_m"][keepidx])
         flag += 1
         if flag > Maxiter:
             break
-    return {"sps": np.array(sps_full), "sps_poi": np.array(sps_poi_full), "sps_m": np.array(sps_m_full)}
+    return {"sps": np.array(sps_full), "sps_M": np.array(sps_M_full), "sps_m": np.array(sps_m_full)}
 
 
-def gen_post_UIP_D_MCMC(N, D, Ds, fct=0.5, burnin=5000, thin=10, diag=False):
+def gen_post_UIP_D_MCMC(N, D, Ds, burnin=5000, thin=10, diag=False):
     n = len(D)
     sps_full = []
-    sps_poi_full = []
+    sps_M_full = []
     sps_m_full = []
     spsX = {'sps': np.array([0.5]), 
-            'sps_poi': np.array([25]),
+            'sps_M': np.array([25]),
             'sps_m': np.array([[12, 13]])}
 
     for i in range(N):
         thetax = spsX['sps'][0]
-        spsY = gen_prior_UIP_D(1, Ds, fct*n)
+        spsY = gen_prior_UIP_D(1, Ds)
         thetay = spsY['sps'][0]
         logaccp = logAccProb(thetay, thetax, D)
         ru = uniform.rvs(loc=0, scale=1, size=1)[0]
@@ -197,16 +201,16 @@ def gen_post_UIP_D_MCMC(N, D, Ds, fct=0.5, burnin=5000, thin=10, diag=False):
         if logru <= logaccp:
             spsX = spsY
         sps_full.append(spsX['sps'][0])
-        sps_poi_full.append(spsX['sps_poi'][0])
+        sps_M_full.append(spsX['sps_M'][0])
         sps_m_full.append(spsX['sps_m'][0])
         
     sps_full = np.array(sps_full)
-    sps_poi_full = np.array(sps_poi_full)
+    sps_M_full = np.array(sps_M_full)
     sps_m_full = np.array(sps_m_full)
     if diag:
-        return {"sps": sps_full, "sps_poi": sps_poi_full, "sps_m": sps_m_full}
+        return {"sps": sps_full, "sps_M": sps_M_full, "sps_m": sps_m_full}
     else:
-        return {"sps": sps_full[burnin::thin], "sps_poi": sps_poi_full[burnin::thin], "sps_m": sps_m_full[burnin::thin]}
+        return {"sps": sps_full[burnin::thin], "sps_M": sps_M_full[burnin::thin], "sps_m": sps_m_full[burnin::thin]}
         
 
 

@@ -30,8 +30,8 @@ for p0, D0 in zip(p0s, D0s):
     #post_sps_UIPD = gen_post_UIP_D_MCMC(60000, D0, Ds, thin=50, burnin=10000)
     post_sps_UIPJS = gen_post_UIP_KL(10000, D0, Ds, Maxiter=500)
     #post_sps_UIPJS = gen_post_UIP_KL_MCMC(60000, D0, Ds, thin=50, burnin=10000)
-    Dpoisps = post_sps_UIPD["sps_poi"]
-    JSpoisps = post_sps_UIPJS["sps_poi"]
+    Dpoisps = post_sps_UIPD["sps_M"]
+    JSpoisps = post_sps_UIPJS["sps_M"]
     length1 = Dpoisps.shape[0]
     length2 = JSpoisps.shape[0]
     print(f"p0 is {p0} and number of UIP-D samples is {length1}.")
@@ -46,6 +46,6 @@ sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
 # plt.xticks(labels=p0s)
 plt.xlabel(r"$\hat{\theta}_0$")
 plt.ylabel(r"$M$")
-plt.ylim([10, 50])
+plt.ylim([0, 80])
 plt.legend(loc=1, title="Priors")
 plt.show()

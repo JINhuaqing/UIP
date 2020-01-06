@@ -67,10 +67,13 @@ def gen_prior_UIP_KL(N, D, Ds):
     ms = np.array([JS_dist_beta(para0, para) for para in paras])
     ms = 1 / (ms + 1e-10) # add 1e-10 to avoid 0 
     # sps_M = gen_trunc_pois(N, lam, 0, 2*lam) # truncated poisson is not suitable
-    sps_M = ntotal * uniform.rvs(size=N, loc=1/ntotal, scale=1-1/ntotal)
+    sps_M = ntotal * uniform.rvs(size=N, loc=2/ntotal, scale=1-2/ntotal)
     Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_M]
     condpriors = [cond_prior(Ds, Ms) for Ms in Mss]
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
+    for condprior, Ms in zip(condpriors, Mss):
+        if npr.beta(condprior[0], condprior[1], 1)[0] == 0:
+            print(condprior, Ms)
     sps = np.array(sps)
     return {"sps": sps, "sps_M": sps_M}
 
@@ -134,7 +137,7 @@ def gen_prior_UIP_multi(N, Ds, lam):
     ntotal = np.sum([len(Dh) for Dh in Ds])
     numDs = len(Ds)
     #sps_M = gen_trunc_pois(N, lam, 0, 2*lam)
-    sps_M = ntotal * uniform.rvs(size=N, loc=1/ntotal, scale=1-1/ntotal)
+    sps_M = ntotal * uniform.rvs(size=N, loc=2/ntotal, scale=1-2/ntotal)
     sps_mul = [multinomial.rvs(sp_poi, np.ones(numDs)/numDs, 1)[0] for sp_poi in sps_M] # use multinomial distribution for Mi
     condpriors = [cond_prior(Ds, sp_mul) for sp_mul in sps_mul] 
     sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
@@ -145,7 +148,7 @@ def gen_prior_UIP_D(N, Ds):
     ntotal = np.sum([len(Dh) for Dh in Ds])
     numDs = len(Ds)
     #sps_M = gen_trunc_pois(N, lam, 0, 2*lam)
-    sps_M = ntotal * uniform.rvs(size=N, loc=1/ntotal, scale=1-1/ntotal)
+    sps_M = ntotal * uniform.rvs(size=N, loc=2/ntotal, scale=1-2/ntotal)
     #sps_M = gamma.rvs(a=lam, size=N)
     sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_M] # use dirichlet distribution for Mi
     condpriors = [cond_prior(Ds, sp_m) for sp_m in sps_m] 

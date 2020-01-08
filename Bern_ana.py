@@ -80,7 +80,7 @@ def getQuantile(p0, data=None, paras=None, alp=0.05):
 
 
 root = Path("./betaMCMC1000/")
-root = Path("./")
+#root = Path("./")
 files = root.glob("*.pkl")
 files = list(files)
 
@@ -121,13 +121,13 @@ JEFq = getFinQ(p0, JEFdata, q=JEFq)
 JPPq = getFinQ(p0, JPPdata, q=JPPq)
 UIPDq = getFinQ(p0, UIPDdata, q=UIPDq)
 UIPKLq = getFinQ(p0, UIPKLdata, q=UIPKLq)
-#JEFq = JEFq * 1.01
+JEFq = JEFq * 1.000
 
 print(fullq, JEFq, JPPq, UIPDq, UIPKLq)
 
 
 
-for pklfile in files:
+for pklfile in files[:-2]:
     data = load_pkl(pklfile)
     data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPD"]) != 0]
     JEFdata = [dat["jef_popu"] for dat in data]

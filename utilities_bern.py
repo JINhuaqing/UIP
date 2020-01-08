@@ -68,12 +68,19 @@ def gen_prior_UIP_KL(N, D, Ds):
     ms = 1 / (ms + 1e-10) # add 1e-10 to avoid 0 
     # sps_M = gen_trunc_pois(N, lam, 0, 2*lam) # truncated poisson is not suitable
     sps_M = ntotal * uniform.rvs(size=N, loc=2/ntotal, scale=1-2/ntotal)
-    Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_M]
-    condpriors = [cond_prior(Ds, Ms) for Ms in Mss]
-    sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
-    for condprior, Ms in zip(condpriors, Mss):
-        if npr.beta(condprior[0], condprior[1], 1)[0] == 0:
-            print(condprior, Ms)
+    sps = []
+    for i in range(N):
+        sp_M = sps_M[i]
+        Ms = ms*sp_M/ms.sum()
+        condprior = cond_prior(Ds, Ms)
+        sp = npr.beta(condprior[0], condprior[1], 1)[0] 
+        sps.append(sp)
+    #Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_M]
+    #condpriors = [cond_prior(Ds, Ms) for Ms in Mss]
+    #sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
+    #for condprior, Ms in zip(condpriors, Mss):
+    #    if npr.beta(condprior[0], condprior[1], 1)[0] == 0:
+    #        print(condprior, Ms)
     sps = np.array(sps)
     return {"sps": sps, "sps_M": sps_M}
 
@@ -150,9 +157,18 @@ def gen_prior_UIP_D(N, Ds):
     #sps_M = gen_trunc_pois(N, lam, 0, 2*lam)
     sps_M = ntotal * uniform.rvs(size=N, loc=2/ntotal, scale=1-2/ntotal)
     #sps_M = gamma.rvs(a=lam, size=N)
-    sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_M] # use dirichlet distribution for Mi
-    condpriors = [cond_prior(Ds, sp_m) for sp_m in sps_m] 
-    sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
+    sps = []
+    sps_m = []
+    for i in range(N): 
+        sp_M = sps_M[i]
+        sp_m = dirichlet.rvs(np.ones(numDs), 1)[0]*sp_M
+        condprior = cond_prior(Ds, sp_m)
+        sp = npr.beta(condprior[0], condprior[1], 1)[0]
+        sps.append(sp)
+        sps_m.append(sp_m)
+    # sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_M] # use dirichlet distribution for Mi
+    # condpriors = [cond_prior(Ds, sp_m) for sp_m in sps_m] 
+    # sps = [npr.beta(condprior[0], condprior[1], 1)[0] for condprior in condpriors]
     sps, sps_m = np.array(sps), np.array(sps_m)
     return {"sps": sps, "sps_M": sps_M, "sps_m": sps_m}
 

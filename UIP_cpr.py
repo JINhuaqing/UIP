@@ -29,12 +29,12 @@ def samp_beta(sps, cutoff):
 
 
 
-Num = 2000
+Num = 1000
 results = []
 p0 = args.p0
-n = 100
+n = 40
 ps = [0.25, 0.4]
-ns = [80, 80]
+ns = [100, 100]
 cutoff = 0.025
 print(f"The p0 is {p0}.")
 
@@ -66,15 +66,15 @@ for jj in range(Num):
     result["full_popu"] = [alp_full, bt_full]
 
     # JPP  
-    post_sps_jpp = gen_post_jpp(20000, D, Ds)
+    post_sps_jpp = gen_post_jpp(50000, D, Ds)
     res_jpp = samp_beta(post_sps_jpp["sps"], cutoff=cutoff)
     result["jpp"] = res_jpp
     result["jpp_sps"] = post_sps_jpp
 
     #UIP-KL
     try:
-        #post_sps_UIPKL = gen_post_UIP_KL_MCMC(15000, D, Ds, burnin=5000, thin=10)
-        post_sps_UIPKL = gen_post_UIP_KL(20000, D, Ds, Maxiter=100)
+        post_sps_UIPKL = gen_post_UIP_KL_MCMC(20000, D, Ds, burnin=4000, thin=8)
+        #post_sps_UIPKL = gen_post_UIP_KL(20000, D, Ds, Maxiter=100)
         res_UIPKL = samp_beta(post_sps_UIPKL["sps"], cutoff=cutoff)
     except Exception as e:
         post_sps_UIPKL = {"sps": []}
@@ -85,8 +85,8 @@ for jj in range(Num):
 
     #UIP-multi
     try:
-        #post_sps_UIPD = gen_post_UIP_D_MCMC(15000, D, Ds, burnin=5000, thin=10)
-        post_sps_UIPD = gen_post_UIP_D(20000, D, Ds, Maxiter=100)
+        post_sps_UIPD = gen_post_UIP_D_MCMC(20000, D, Ds, burnin=4000, thin=8)
+        #post_sps_UIPD = gen_post_UIP_D(20000, D, Ds, Maxiter=100)
         res_UIPD = samp_beta(post_sps_UIPD["sps"], cutoff=cutoff)
     except Exception as e:
         post_sps_UIPD = {"sps": []}
@@ -102,6 +102,6 @@ for jj in range(Num):
         )
     results.append(result)
 
-with open(f"RJBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
-#with open(f"MCMCBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
+#with open(f"RJBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
+with open(f"MCMCBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
     pickle.dump(results, f)

@@ -75,17 +75,18 @@ def getQuantile(p0, data=None, paras=None, alp=0.05):
         res = [getRatio(p0, para=para) for para in paras]
     if data is not None:
         res = [getRatio(p0, data=dat) for dat in data]
-    #print(np.sort(res))
+    #n = len(res)
     return np.quantile(res, q=alp)
 
 
-root = Path("./MCMC500/")
+root = Path("./betaMCMC1000/")
+root = Path("./")
 files = root.glob("*.pkl")
 files = list(files)
 
 # test p = p0
 idxs = [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6]
-p0 = 0.6
+p0 = 0.40
 
 # sort the files
 powers = []
@@ -105,9 +106,25 @@ UIPKLq = getQuantile(p0, data=UIPKLdata)
 JPPq = getQuantile(p0, data=JPPdata)
 JEFq = getQuantile(p0, paras=JEFdata)
 fullq = getQuantile(p0, paras=fulldata)
-JEFq = JEFq * 0.90
-#UIPDq = UIPDq * 1.05
-print(UIPDq, JPPq, UIPKLq, JEFq, fullq)
+
+def getFinQ(p0, data, q, alp=0.05):
+    q2 = q + 1e-10
+    r1 = rejrate(p0, data, q=q)
+    r2 = rejrate(p0, data, q=q2)
+    if np.abs(r1-alp) < np.abs(r2-alp):
+        return q
+    else:
+        return q2
+
+UIPDq = getFinQ(p0, UIPDdata, q=UIPDq)
+UIPKLq = getFinQ(p0, UIPKLdata, q=UIPKLq)
+JPPq = getFinQ(p0, JPPdata, q=JPPq)
+fullq = getFinQ(p0, fulldata, q=fullq)
+JEFq = getFinQ(p0, JEFdata, q=JEFq)
+
+print(UIPDq, UIPKLq, JPPq, JEFq, fullq)
+
+
 
 for pklfile in files:
     data = load_pkl(pklfile)
@@ -119,13 +136,13 @@ for pklfile in files:
     JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
 
     p = sortf(pklfile)/100
-    print(p)
     res = {
             "UIPD": rejrate(p0, UIPDdata, q=UIPDq),
             "UIPKL": rejrate(p0, UIPKLdata, q=UIPKLq),
             "JPP": rejrate(p0, JPPdata, q=JPPq),
             "jef": rejrate(p0, JEFdata, q=JEFq),
             "full": rejrate(p0, fulldata, q=fullq),
+            "p0": p
             }
     if p == p0:
         size = res
@@ -135,7 +152,7 @@ powers = pd.DataFrame(powers)
 print(powers)
 
 print(f"Powers")
-print(powers.mean(axis=0))
+print(powers.drop(columns=["p0"]).mean(axis=0))
 print("Size")
 pprint(size)
 

@@ -240,7 +240,7 @@ def gen_post_jpp(N, D, Ds, burnin=5000):
     for i in range(N+burnin):
         gammas = [gen_conpostga_jpp(1, p, Dh) for  Dh in Ds] 
         p = gen_conpostp_jpp(D, Ds, gammas)
-        if i > burnin:
+        if i >= burnin:
             sps.append(p)
             gammass.append(gammas)
     sps, gammass = np.array(sps), np.array(gammass)

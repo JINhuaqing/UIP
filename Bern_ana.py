@@ -86,7 +86,7 @@ files = list(files)
 
 # test p = p0
 idxs = [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6]
-p0 = 0.40
+p0 = 0.50
 
 # sort the files
 powers = []
@@ -95,17 +95,17 @@ f = files[idxs.index(p0)]
 
 # get the calibrated quantile
 data = load_pkl(f)
-JEFdata = [dat["jef_popu"] for dat in data]
 fulldata = [dat["full_popu"] for dat in data]
+JEFdata = [dat["jef_popu"] for dat in data]
+JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
 UIPDdata = [dat["UIPD_sps"]["sps"]  for dat in data]
 UIPKLdata = [dat["UIPKL_sps"]["sps"]  for dat in data]
-JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
 
+fullq = getQuantile(p0, paras=fulldata)
+JEFq = getQuantile(p0, paras=JEFdata)
+JPPq = getQuantile(p0, data=JPPdata)
 UIPDq = getQuantile(p0, data=UIPDdata)
 UIPKLq = getQuantile(p0, data=UIPKLdata)
-JPPq = getQuantile(p0, data=JPPdata)
-JEFq = getQuantile(p0, paras=JEFdata)
-fullq = getQuantile(p0, paras=fulldata)
 
 def getFinQ(p0, data, q, alp=0.05):
     q2 = q + 1e-10
@@ -116,13 +116,14 @@ def getFinQ(p0, data, q, alp=0.05):
     else:
         return q2
 
-UIPDq = getFinQ(p0, UIPDdata, q=UIPDq)
-UIPKLq = getFinQ(p0, UIPKLdata, q=UIPKLq)
-JPPq = getFinQ(p0, JPPdata, q=JPPq)
 fullq = getFinQ(p0, fulldata, q=fullq)
 JEFq = getFinQ(p0, JEFdata, q=JEFq)
+JPPq = getFinQ(p0, JPPdata, q=JPPq)
+UIPDq = getFinQ(p0, UIPDdata, q=UIPDq)
+UIPKLq = getFinQ(p0, UIPKLdata, q=UIPKLq)
+#JEFq = JEFq * 1.01
 
-print(UIPDq, UIPKLq, JPPq, JEFq, fullq)
+print(fullq, JEFq, JPPq, UIPDq, UIPKLq)
 
 
 
@@ -137,11 +138,11 @@ for pklfile in files:
 
     p = sortf(pklfile)/100
     res = {
+            "full": rejrate(p0, fulldata, q=fullq),
+            "JEF": rejrate(p0, JEFdata, q=JEFq),
+            "JPP": rejrate(p0, JPPdata, q=JPPq),
             "UIPD": rejrate(p0, UIPDdata, q=UIPDq),
             "UIPKL": rejrate(p0, UIPKLdata, q=UIPKLq),
-            "JPP": rejrate(p0, JPPdata, q=JPPq),
-            "jef": rejrate(p0, JEFdata, q=JEFq),
-            "full": rejrate(p0, fulldata, q=fullq),
             "p0": p
             }
     if p == p0:

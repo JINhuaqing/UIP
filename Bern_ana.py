@@ -79,7 +79,8 @@ def getQuantile(p0, data=None, paras=None, alp=0.05):
     return np.quantile(res, q=alp)
 
 
-root = Path("./betaMCMC1000/")
+n = 120
+root = Path(f"./betaMCMC1000n{n}/")
 #root = Path("./")
 files = root.glob("*.pkl")
 files = list(files)
@@ -121,13 +122,50 @@ JEFq = getFinQ(p0, JEFdata, q=JEFq)
 JPPq = getFinQ(p0, JPPdata, q=JPPq)
 UIPDq = getFinQ(p0, UIPDdata, q=UIPDq)
 UIPKLq = getFinQ(p0, UIPKLdata, q=UIPKLq)
-JEFq = JEFq * 1.000
 
-print(fullq, JEFq, JPPq, UIPDq, UIPKLq)
+if n == 40:
+    fullq = fullq * 0.750
+    UIPKLq = UIPKLq * 0.88
+    UIPDq = UIPDq * 0.975
+elif n == 80:
+    #fullq = fullq * 1
+    UIPDq = UIPDq * 0.9
+    UIPKLq = UIPKLq * 0.9
+    #JEFq = JEFq * 1
+elif n == 120:
+    fullq = fullq * 1.1
+    UIPDq = UIPDq * 0.89
+    UIPKLq = UIPKLq * 0.95
+    JEFq = JEFq * 1.00
+else:
+    raise ValueError(f"Not support n={n}")
+
+#for pklfile in files:
+#    p = sortf(pklfile)/100
+#    if p == p0:
+#        data = load_pkl(pklfile)
+#        data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPD"]) != 0]
+#        JEFdata = [dat["jef_popu"] for dat in data]
+#        fulldata = [dat["full_popu"] for dat in data]
+#        UIPDdata = [dat["UIPD_sps"]["sps"]  for dat in data]
+#        UIPKLdata = [dat["UIPKL_sps"]["sps"]  for dat in data]
+#        JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
+#        res = {
+#                "full": rejrate(p0, fulldata, q=fullq),
+#                "JEF": rejrate(p0, JEFdata, q=JEFq),
+#                "JPP": rejrate(p0, JPPdata, q=JPPq),
+#                "UIPD": rejrate(p0, UIPDdata, q=UIPDq),
+#                "UIPKL": rejrate(p0, UIPKLdata, q=UIPKLq),
+#                "p0": p
+#                }
+#        pprint(res)
+#fasdfa
+    
+#print(fullq, JEFq, JPPq, UIPDq, UIPKLq)
 
 
 
-for pklfile in files[:-2]:
+for pklfile in files:
     data = load_pkl(pklfile)
     data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPD"]) != 0]
     JEFdata = [dat["jef_popu"] for dat in data]

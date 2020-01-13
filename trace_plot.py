@@ -13,12 +13,13 @@ def GenD0(p0, n):
     return D0
 
 
-p0 =0.5
+p0 =0.3
 n = 60
-ps = [0.25, 0.4]
+ps = [0.3, 0.8]
 ns = [40, 40]
 D0 = GenD0(p0, n)
-Ds = [bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
+Ds = [GenD0(ps[i], ns[i]) for i in range(len(ns))]
+#Ds = [bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
 
 #post_sps_UIPD = gen_post_UIP_D(10000, D0, Ds, Maxiter=500)
 post_sps_UIPD = gen_post_UIP_D_MCMC(10000, D0, Ds, thin=1, burnin=5000, diag=True)
@@ -66,6 +67,8 @@ plt.subplots_adjust(wspace=0.5, hspace=0.5)
 plt.subplot(221)
 sns.kdeplot(post_sps_UIPD_RJ["sps"], color="red", label="RJ Sampling")
 sns.kdeplot(post_sps_UIPD_MCMC["sps"], color="green", label="MH Sampling")
+#sns.kdeplot(data["theta"], color="blue", label="Stan Sampling")
+#sns.kdeplot(data1["theta"], color="pink", label="PP prior")
 plt.ylabel("")
 plt.xlabel(r"$\theta_{post}$")
 plt.legend(loc=1)
@@ -73,6 +76,7 @@ plt.legend(loc=1)
 plt.subplot(222)
 sns.kdeplot(post_sps_UIPD_RJ["sps_M"], color="red", label="RJ Sampling")
 sns.kdeplot(post_sps_UIPD_MCMC["sps_M"], color="green", label="MH Sampling")
+#sns.kdeplot(data["M"], color="blue", label="Stan Sampling")
 plt.ylabel("")
 plt.xlabel(r"$M_{post}$")
 plt.legend(loc=1)

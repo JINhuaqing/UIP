@@ -79,7 +79,7 @@ def getQuantile(p0, data=None, paras=None, alp=0.05):
     return np.quantile(res, q=alp)
 
 
-n = 120
+n = 40
 root = Path(f"./betaMCMC1000n{n}/")
 #root = Path("./")
 files = root.glob("*.pkl")
@@ -92,19 +92,25 @@ p0 = 0.50
 # sort the files
 powers = []
 files = sorted(files, key=sortf, reverse=False)
+filesnpp = files[1::2]
+files = files[::2]
 f = files[idxs.index(p0)]
+fnpp = filesnpp[idxs.index(p0)]
 
 # get the calibrated quantile
 data = load_pkl(f)
+datanpp = load_pkl(fnpp)
 fulldata = [dat["full_popu"] for dat in data]
 JEFdata = [dat["jef_popu"] for dat in data]
 JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
+NPPdata = [dat["npp_sps"]["theta"]  for dat in datanpp]
 UIPDdata = [dat["UIPD_sps"]["sps"]  for dat in data]
 UIPKLdata = [dat["UIPKL_sps"]["sps"]  for dat in data]
 
 fullq = getQuantile(p0, paras=fulldata)
 JEFq = getQuantile(p0, paras=JEFdata)
 JPPq = getQuantile(p0, data=JPPdata)
+NPPq = getQuantile(p0, data=NPPdata)
 UIPDq = getQuantile(p0, data=UIPDdata)
 UIPKLq = getQuantile(p0, data=UIPKLdata)
 
@@ -120,6 +126,7 @@ def getFinQ(p0, data, q, alp=0.05):
 fullq = getFinQ(p0, fulldata, q=fullq)
 JEFq = getFinQ(p0, JEFdata, q=JEFq)
 JPPq = getFinQ(p0, JPPdata, q=JPPq)
+NPPq = getFinQ(p0, NPPdata, q=NPPq)
 UIPDq = getFinQ(p0, UIPDdata, q=UIPDq)
 UIPKLq = getFinQ(p0, UIPKLdata, q=UIPKLq)
 
@@ -127,19 +134,24 @@ if n == 40:
     fullq = fullq * 0.750
     UIPKLq = UIPKLq * 0.88
     UIPDq = UIPDq * 0.975
+    NPPq = NPPq * 0.95
 elif n == 80:
     #fullq = fullq * 1
     UIPDq = UIPDq * 0.9
     UIPKLq = UIPKLq * 0.9
+    NPPq = NPPq * 0.99
     #JEFq = JEFq * 1
 elif n == 120:
     fullq = fullq * 1.1
     UIPDq = UIPDq * 0.89
     UIPKLq = UIPKLq * 0.95
     JEFq = JEFq * 1.00
+    NPPq = NPPq * 0.95
 else:
     raise ValueError(f"Not support n={n}")
 
+#UIPDq = NPPq
+#UIPKLq = NPPq
 #for pklfile in files:
 #    p = sortf(pklfile)/100
 #    if p == p0:
@@ -165,20 +177,23 @@ else:
 
 
 
-for pklfile in files:
+for pklfile, nppfile in zip(files, filesnpp):
     data = load_pkl(pklfile)
+    datanpp = load_pkl(nppfile)
     data = [dat for dat in data if len(dat["UIPKL"]) != 0 and len(dat["UIPD"]) != 0]
     JEFdata = [dat["jef_popu"] for dat in data]
     fulldata = [dat["full_popu"] for dat in data]
     UIPDdata = [dat["UIPD_sps"]["sps"]  for dat in data]
     UIPKLdata = [dat["UIPKL_sps"]["sps"]  for dat in data]
     JPPdata = [dat["jpp_sps"]["sps"]  for dat in data]
+    NPPdata = [dat["npp_sps"]["theta"]  for dat in datanpp]
 
     p = sortf(pklfile)/100
     res = {
             "full": rejrate(p0, fulldata, q=fullq),
             "JEF": rejrate(p0, JEFdata, q=JEFq),
             "JPP": rejrate(p0, JPPdata, q=JPPq),
+            "NPP": rejrate(p0, NPPdata, q=NPPq),
             "UIPD": rejrate(p0, UIPDdata, q=UIPDq),
             "UIPKL": rejrate(p0, UIPKLdata, q=UIPKLq),
             "p0": p

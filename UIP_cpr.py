@@ -32,9 +32,9 @@ def samp_beta(sps, cutoff):
 Num = 1000
 results = []
 p0 = args.p0
-n = 120
+n = 80
 ps = [0.25, 0.4]
-ns = [100, 100]
+ns = [50, 100]
 cutoff = 0.025
 print(f"The p0 is {p0}.")
 
@@ -103,5 +103,5 @@ for jj in range(Num):
     results.append(result)
 
 #with open(f"RJBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
-with open(f"MCMCBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
+with open(f"MCMCBern_nsdiff_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
     pickle.dump(results, f)

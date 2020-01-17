@@ -10,7 +10,7 @@ from pprint import pprint
 
 
 def sortf(f):
-    num = f.name.split("_")[2].split("p")[-1]
+    num = f.name.split("_")[-2].split("p")[-1]
     num = int(num)
     return  num
 
@@ -79,8 +79,9 @@ def getQuantile(p0, data=None, paras=None, alp=0.05):
     return np.quantile(res, q=alp)
 
 
-n = 40
+n = 80
 root = Path(f"./betaMCMC1000n{n}/")
+root = Path(f"./betaMCMC1000n{n}nsdiff/")
 #root = Path("./")
 files = root.glob("*.pkl")
 files = list(files)
@@ -137,9 +138,11 @@ if n == 40:
     NPPq = NPPq * 0.95
 elif n == 80:
     #fullq = fullq * 1
-    UIPDq = UIPDq * 0.9
-    UIPKLq = UIPKLq * 0.9
-    NPPq = NPPq * 0.99
+    #UIPDq = UIPDq * 0.9 # ns equal
+    UIPDq = UIPDq * 0.95
+    #UIPKLq = UIPKLq * 0.9 # ns equal
+    UIPKLq = UIPKLq * 0.95
+    NPPq = NPPq * 0.95
     #JEFq = JEFq * 1
 elif n == 120:
     fullq = fullq * 1.1

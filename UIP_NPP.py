@@ -21,13 +21,13 @@ def load_pkl(f):
 
 Num = 1000
 p0 = args.p0
-n = 40
-fil = f"./betaMCMC1000n{n}/MCMCBern_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl"
+n = 80
+fil = f"./betaMCMC1000n{n}nsdiff/MCMCBern_nsdiff_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl"
 resdata =  load_pkl(fil)
 results = []
 print(f"The loading file is {fil}.")
 
-NPPsm = pystan.StanModel(file="./tmp/bernJPP.stan")
+NPPsm = pystan.StanModel(file="./Bernstan/bernNPP.stan")
 
 for jj in range(Num):
     result = {}
@@ -52,6 +52,7 @@ for jj in range(Num):
         warmup=5000,
         thin=10
         )
+    print(fit)
     post_sps_npp = fit.extract()
     result["npp_sps"] = post_sps_npp
 
@@ -61,5 +62,5 @@ for jj in range(Num):
         )
     results.append(result)
 
-with open(f"MCMCBernNPP_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
+with open(f"MCMCBernNPP_nsdiff_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
     pickle.dump(results, f)

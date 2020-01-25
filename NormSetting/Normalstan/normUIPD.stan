@@ -37,7 +37,7 @@ transformed parameters{
 
 model {
     pis ~ dirichlet([1.0, 1.0]');
-    M ~ uniform(2.0, n1+n2);
+    M ~ uniform(0, n1+n2);
     sigma2 ~ inv_gamma(0.01, 0.01);
     theta ~ normal(mun, sigman);
     for (i in 1:n)

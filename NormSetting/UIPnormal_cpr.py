@@ -87,5 +87,5 @@ for jj in range(Num):
     results.append(result)
 
 
-with open(f"MCMCNorm_{Num}_p0{int(100*p0)}_n{int(n)}.pkl", "wb") as f:
+with open(f"MCMCNorm_{Num}_p0{int(100*theta0)}_n{int(n)}.pkl", "wb") as f:
     pickle.dump(results, f)

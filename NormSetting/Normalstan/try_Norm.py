@@ -2,14 +2,15 @@ import pystan
 import pickle
 import numpy as np
 from scipy.stats import norm
+import matplotlib.pyplot as plt
 np.random.seed(2020)
 
 
-priortype = "UIPJS"
+priortype = "UIPD"
 
 theta0 = 0
-n = 80
-thetas = [0.5, 0.8]
+n = 40
+thetas = [0.5, 0.3]
 ns = [50, 100]
 sigma0 = sigma1 = sigma2 = 1
 
@@ -25,9 +26,9 @@ data['D'] = D0
 data['D1'] = D1
 data['D2'] = D2
 
-#control = {"adapt_delta":0.80}
+control = {"adapt_delta": 0.95}
 
-numc = 2
+numc = 5
 if priortype == "NPP":
     inits = [{"theta": 0, "sigma2": 1, "gamma1": 0.5, "gamma2": 0.5}] 
     sm = pystan.StanModel(file="./normNPP.stan")
@@ -43,17 +44,20 @@ elif priortype == "UIPJS":
 
 fit = sm.sampling(data=data, 
         chains=numc, 
-        iter=50000, 
-        warmup=25000,
-        thin=10,
+        iter=30000, 
+        warmup=20000,
+        thin=numc,
         seed=2020,
-        #control=control,
-#        init=inits * 2
+        control=control,
+#        algorithm="HMC",
+        init=inits * numc
         )
 
 print(fit)
 
-#dat = fit.extract()
+dat = fit.extract()
+plt.plot(dat["theta"][::10])
+plt.savefig(f"./{priortype}.png")
 #with open("stanJPP.pkl","wb") as f:
 ###with open("stanUIPD.pkl","wb") as f:
 #    pickle.dump(dat, f)

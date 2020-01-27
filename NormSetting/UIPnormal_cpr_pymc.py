@@ -45,7 +45,12 @@ for jj in range(Num):
                       } 
 
     print("==" * 100)
-    outstring = f"%The iteration {jj+1}/{Num}. Totol time is {np.round((time.time()-init)/60, 4)} min%"
+    ctm = np.round((time.time()-init)/60, 4)
+    if jj >= 1:
+        pctm = np.round(ctm/(jj), 4)
+    else:
+        pctm = ctm
+    outstring = f"%%The iteration {jj+1}/{Num}. Totol time is {ctm} min, per iter time is {pcmt}.%%"
     print("%" * len(outstring))
     print(outstring)
     print("%" * len(outstring))
@@ -112,5 +117,7 @@ for jj in range(Num):
         results.append(result)
 
 
-        with open(fname, "wb") as f:
-            pickle.dump(results, f)
+        if jj % 5 == 0:
+            print(f"Saving results at iteration {jj+1}")
+            with open(fname, "wb") as f:
+                pickle.dump(results, f)

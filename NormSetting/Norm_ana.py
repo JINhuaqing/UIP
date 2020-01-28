@@ -62,7 +62,8 @@ def getQuantile(theta0, data=None, paras=None, alp=0.05):
 
 
 n = 40
-root = Path(f"./normalMCMC1000n{n}nsdiff/")
+root = Path(f"./MCMC1000n{n}nsdiff/")
+root = Path(f"./")
 #root = Path("./")
 files = root.glob("*.pkl")
 files = list(files)
@@ -79,6 +80,7 @@ f = files[idxs.index(theta0)]
 # get the calibrated quantile
 data = load_pkl(f)
 dat = data[0]
+print(dat)
 fulldata = [dat["full"]["theta"] for dat in data]
 JEFdata = [dat["jef"]["theta"] for dat in data]
 NPPdata = [dat["NPP"]["theta"]  for dat in data]

@@ -10,7 +10,7 @@ priortype = "UIPD"
 
 theta0 = 0
 n = 40
-thetas = [0.5, 0.3]
+thetas = [0.5, 1]
 ns = [50, 100]
 sigma0 = sigma1 = sigma2 = 1
 
@@ -26,7 +26,7 @@ data['D'] = D0
 data['D1'] = D1
 data['D2'] = D2
 
-control = {"adapt_delta": 0.95}
+control = {"adapt_delta": 0.90}
 
 numc = 5
 if priortype == "NPP":
@@ -44,7 +44,7 @@ elif priortype == "UIPJS":
 
 fit = sm.sampling(data=data, 
         chains=numc, 
-        iter=30000, 
+        iter=40000, 
         warmup=20000,
         thin=numc,
         seed=2020,

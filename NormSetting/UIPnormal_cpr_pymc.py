@@ -18,7 +18,7 @@ args = parser.parse_args()
 Num = 1000
 theta0 = args.t0
 sigma0 = sigma1 = sigma2 = 1
-n = 40
+n = 120
 thetas = [0.5, 1]
 ns = [50, 100]
 print(f"The theta0 is {theta0}.")

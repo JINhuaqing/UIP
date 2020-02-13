@@ -21,7 +21,7 @@ def load_pkl(f):
 
 Num = 1000
 p0 = args.p0
-n = 40
+n = 120
 fil = f"./betaMCMC1000n{n}nsdiff/MCMCBern_nsdiff_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl"
 resdata =  load_pkl(fil)
 results = []

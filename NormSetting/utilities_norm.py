@@ -6,7 +6,7 @@ import pymc3 as pm
 
 def sigma2cond_theta(theta, D):
     n = len(D)
-    shape = n/2
+    shape = n/2 + 1/2
     scale = np.sum((D-theta)**2)/2
     return invgamma.rvs(a=shape, scale=scale, size=1)
     

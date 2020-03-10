@@ -41,9 +41,9 @@ dicdata = {"y": sps, "ps": pslist, "histps": histpslist}
 dfdata = pd.DataFrame(dicdata)
 sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
 #plt.xticks(labels=p0s)
-plt.xlabel(r"$\hat{\theta}_0$")
+plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$\pi_k$")
-plt.ylim([0, 1])
+plt.ylim([0, 1.3])
 plt.legend(loc=1, title=r"$\theta_k$ of historical data")
 plt.show()
 

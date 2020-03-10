@@ -38,14 +38,14 @@ for p0, D0 in zip(p0s, D0s):
     print(f"p0 is {p0} and number of UIP-JS samples is {length2}.")
     pslist = pslist + [p0] * (length1 + length2)
     sps = sps + list(Dpoisps) + list(JSpoisps)
-    histpslist = histpslist + ["UIP-D"] * length1 + ["UPD-JS"] * length2
+    histpslist = histpslist + ["UIP-Dirichlet"] * length1 + ["UIP-JS"] * length2
 
 dicdata = {"y": sps, "ps": pslist, "histps": histpslist}
 dfdata = pd.DataFrame(dicdata)
 sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
 # plt.xticks(labels=p0s)
-plt.xlabel(r"$\hat{\theta}_0$")
+plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$M$")
-plt.ylim([0, 80])
+plt.ylim([0, 105])
 plt.legend(loc=1, title="Priors")
 plt.show()

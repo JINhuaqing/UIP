@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import bernoulli
-from utilities_bern import *
+from BernSetting.utilities_bern import *
 np.random.seed(1)
 
 
@@ -13,7 +13,6 @@ def GenD0(p0, n):
     return D0
 
 
-p0s = np.array([0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8])
 p0s = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
 n = 60
 ps = [0.3, 0.8]
@@ -21,6 +20,23 @@ ns = [40, 40]
 # D0s = [bernoulli.rvs(p0s[i], size=n) for i in range(len(p0s))]
 D0s = [GenD0(p0s[i], n) for i in range(len(p0s))]
 Ds = [bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
+
+JSpis = {}
+for D0, p0 in zip(D0s, p0s):
+    JSpis[p0] = []
+    calp, cbeta = 1 + np.sum(D0), 1 + np.sum(1-D0)
+    for D in Ds:
+        halp, hbeta = 1 + np.sum(D), 1 + np.sum(1-D)
+        JSpis[p0].append(JS_dist_beta([calp, cbeta], [halp, hbeta]))
+
+for key, v in JSpis.items():
+    arrv = np.array(v)
+    invv = 1/arrv
+    pis = invv/np.sum(invv)
+    JSpis[key] = pis
+
+
+
 
 data = {}
 pslist = []
@@ -47,3 +63,14 @@ plt.ylim([0, 1.3])
 plt.legend(loc=1, title=r"$\theta_k$ of historical data")
 plt.show()
 
+JSpi1s = np.array([v[0] for v in JSpis.values()])
+JSpi2s = np.array([v[1] for v in JSpis.values()])
+
+plt.ylim([-0.1, 1.3])
+plt.xlabel(r"$\hat{\theta}$")
+plt.ylabel(r"$\pi_k$")
+plt.xticks(p0s, labels=p0s)
+plt.plot(p0s, JSpi1s, "bh", label="0.3")
+plt.plot(p0s, JSpi2s, color="orange", marker="^", label="0.8", linestyle="")
+plt.legend()
+plt.show()

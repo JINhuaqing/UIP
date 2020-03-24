@@ -23,7 +23,7 @@ Num = 1000
 p0 = args.p0
 n = 120
 fil = f"./betaMCMC1000n{n}nsdiff/MCMCBern_nsdiff_Num{Num}_p0{int(100*p0)}_n{int(n)}.pkl"
-resdata =  load_pkl(fil)
+resdata = load_pkl(fil)
 results = []
 print(f"The loading file is {fil}.")
 

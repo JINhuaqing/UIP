@@ -3,7 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import bernoulli
-from utilities_bern import *
+from BernSetting.utilities_bern import *
+import pickle
 np.random.seed(1)
 
 
@@ -13,14 +14,13 @@ def GenD0(p0, n):
     return D0
 
 
-p0s = np.array([0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8])
 p0s = np.array([0.4, 0.45, 0.5, 0.55, 0.6, 0.65])
 n = 60
 ps = [0.25, 0.40]
 ns = [40, 40]
 # D0s = [bernoulli.rvs(p0s[i], size=n) for i in range(len(p0s))]
 D0s = [GenD0(p0s[i], n) for i in range(len(p0s))]
-Ds = [bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
+Ds = [GenD0(ps[i], ns[i]) for i in range(len(ns))]
 
 pslist = []
 sps = []
@@ -42,10 +42,19 @@ for p0, D0 in zip(p0s, D0s):
 
 dicdata = {"y": sps, "ps": pslist, "histps": histpslist}
 dfdata = pd.DataFrame(dicdata)
+
+with open("boxplot_M.pkl", "wb") as f:
+    pickle.dump(dfdata, f)
+
+with open("boxplot_M.pkl", "rb") as f:
+    dfdata = pickle.load(f)
+
 sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
 # plt.xticks(labels=p0s)
 plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$M$")
 plt.ylim([0, 105])
 plt.legend(loc=1, title="Priors")
+plt.savefig("boxplot_M.pdf")
 plt.show()
+plt.close()

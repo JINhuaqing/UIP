@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import bernoulli
 from BernSetting.utilities_bern import *
+import pickle
 np.random.seed(1)
 
 
@@ -19,7 +20,7 @@ ps = [0.3, 0.8]
 ns = [40, 40]
 # D0s = [bernoulli.rvs(p0s[i], size=n) for i in range(len(p0s))]
 D0s = [GenD0(p0s[i], n) for i in range(len(p0s))]
-Ds = [bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
+Ds = [GenD0(ps[i], ns[i]) for i in range(len(ns))]
 
 JSpis = {}
 for D0, p0 in zip(D0s, p0s):
@@ -50,27 +51,38 @@ for p0, D0 in zip(p0s, D0s):
     length = dsps.shape[0]
     print(f"p0 is {p0} and number of samples is {length}.")
     pslist = pslist + [p0] * length * 2
-    histpslist = histpslist + [0.3] * length + [0.8] * length
+    histpslist = histpslist + [r"$D_1$ $(\hat{\theta}_1=$" + "0.3)"] * length + [r"$D_2$ $(\hat{\theta}_2=$" + "0.8)"]* length
     sps = sps + list(dsps[:, 0]) + list(dsps[:, 1])
 
 dicdata = {"y": sps, "ps": pslist, "histps": histpslist}
 dfdata = pd.DataFrame(dicdata)
+
+with open("boxplotpiUIPD.pkl", "rb") as f:
+    dfdata = pickle.load(f)
+
 sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
 #plt.xticks(labels=p0s)
 plt.xlabel(r"$\hat{\theta}$")
-plt.ylabel(r"$\pi_k$")
+plt.ylabel(r"$\pi_1/\pi_2$")
 plt.ylim([0, 1.3])
-plt.legend(loc=1, title=r"$\theta_k$ of historical data")
+plt.legend(loc=1, title=r"The historical datasets")
+plt.savefig("boxplot_pi.pdf")
 plt.show()
+plt.close()
 
 JSpi1s = np.array([v[0] for v in JSpis.values()])
 JSpi2s = np.array([v[1] for v in JSpis.values()])
 
-plt.ylim([-0.1, 1.3])
+with open("plotpiUIPJS.pkl", "rb") as f:
+    JSpi1s, JSpi2s = pickle.load(f)
+
+plt.ylim([-0.1, 1.4])
 plt.xlabel(r"$\hat{\theta}$")
-plt.ylabel(r"$\pi_k$")
+plt.ylabel(r"$\pi_1/\pi_2$")
 plt.xticks(p0s, labels=p0s)
-plt.plot(p0s, JSpi1s, "bh", label="0.3")
-plt.plot(p0s, JSpi2s, color="orange", marker="^", label="0.8", linestyle="")
-plt.legend()
+plt.plot(p0s, JSpi1s, "bh", label=r"$D_1$ $(\hat{\theta}_1=$" + "0.3)")
+plt.plot(p0s, JSpi2s, color="orange", marker="^", label=r"$D_2$ $(\hat{\theta}_2=$" + "0.8)", linestyle="")
+plt.legend(loc=1, title=r"The historical datasets")
+#plt.savefig("plot_pi_JS.pdf")
 plt.show()
+plt.close()

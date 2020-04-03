@@ -57,15 +57,16 @@ for p0, D0 in zip(p0s, D0s):
 dicdata = {"y": sps, "ps": pslist, "histps": histpslist}
 dfdata = pd.DataFrame(dicdata)
 
-with open("boxplotpiUIPD.pkl", "rb") as f:
+with open("./BernSetting/boxplotpiUIPD.pkl", "rb") as f:
     dfdata = pickle.load(f)
 
-sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
+sns.set_style("white")
+sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette="Set3")
 #plt.xticks(labels=p0s)
 plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$\pi_1/\pi_2$")
 plt.ylim([0, 1.3])
-plt.legend(loc=1, title=r"The historical datasets")
+plt.legend(loc=1, title=r"The historical datasets", frameon=True )
 plt.savefig("boxplot_pi.pdf")
 plt.show()
 plt.close()

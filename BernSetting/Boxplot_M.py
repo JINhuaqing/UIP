@@ -46,10 +46,10 @@ dfdata = pd.DataFrame(dicdata)
 with open("boxplot_M.pkl", "wb") as f:
     pickle.dump(dfdata, f)
 
-with open("boxplot_M.pkl", "rb") as f:
+with open("./BernSetting/boxplot_M.pkl", "rb") as f:
     dfdata = pickle.load(f)
 
-sns.boxplot(y="y", x="ps", hue="histps", data=dfdata)
+sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette="Set3")
 # plt.xticks(labels=p0s)
 plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$M$")

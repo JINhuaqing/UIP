@@ -74,6 +74,15 @@ def gen_prior_UIP_KL(N, D, Ds):
         Ms = ms*sp_M/ms.sum()
         condprior = cond_prior(Ds, Ms)
         sp = npr.beta(condprior[0], condprior[1], 1)[0] 
+        # To avoid zero when sampling sp
+        if sp == 0:
+            print(f"condprior is {condprior}.")
+            print(f"M is {sp_M}.")
+            sp += 1e-15
+        if sp == 1:
+            print(f"condprior is {condprior}.")
+            print(f"M is {sp_M}.")
+            sp -= 1e-15
         sps.append(sp)
     #Mss = [ms*sp_poi/ms.sum() for sp_poi in sps_M]
     #condpriors = [cond_prior(Ds, Ms) for Ms in Mss]
@@ -164,6 +173,17 @@ def gen_prior_UIP_D(N, Ds):
         sp_m = dirichlet.rvs(np.ones(numDs), 1)[0]*sp_M
         condprior = cond_prior(Ds, sp_m)
         sp = npr.beta(condprior[0], condprior[1], 1)[0]
+        # To avoid zero when sampling sp
+        if sp == 0:
+            print(f"condprior is {condprior}.")
+            print(f"M is {sp_M}.")
+            print(f"m is {sp_m}.")
+            sp += 1e-15
+        if sp == 1:
+            print(f"condprior is {condprior}.")
+            print(f"M is {sp_M}.")
+            print(f"m is {sp_m}.")
+            sp -= 1e-15
         sps.append(sp)
         sps_m.append(sp_m)
     # sps_m = [dirichlet.rvs(np.ones(numDs), 1)[0]*sp_poi for sp_poi in sps_M] # use dirichlet distribution for Mi

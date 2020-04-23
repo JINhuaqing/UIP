@@ -57,11 +57,11 @@ for p0, D0 in zip(p0s, D0s):
 dicdata = {"y": sps, "ps": pslist, "histps": histpslist}
 dfdata = pd.DataFrame(dicdata)
 
-with open("./BernSetting/boxplotpiUIPD.pkl", "rb") as f:
+with open("./BernSetting/plotpkls/boxplotpiUIPD.pkl", "rb") as f:
     dfdata = pickle.load(f)
 
 sns.set_style("white")
-sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette="Set3")
+sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette=["#F25757", "#1094E9"])
 #plt.xticks(labels=p0s)
 plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$\pi_1/\pi_2$")
@@ -74,16 +74,16 @@ plt.close()
 JSpi1s = np.array([v[0] for v in JSpis.values()])
 JSpi2s = np.array([v[1] for v in JSpis.values()])
 
-with open("plotpiUIPJS.pkl", "rb") as f:
+with open("./BernSetting/plotpkls/plotpiUIPJS.pkl", "rb") as f:
     JSpi1s, JSpi2s = pickle.load(f)
 
 plt.ylim([-0.1, 1.4])
 plt.xlabel(r"$\hat{\theta}$")
 plt.ylabel(r"$\pi_1/\pi_2$")
 plt.xticks(p0s, labels=p0s)
-plt.plot(p0s, JSpi1s, "bh", label=r"$D_1$ $(\hat{\theta}_1=$" + "0.3)")
-plt.plot(p0s, JSpi2s, color="orange", marker="^", label=r"$D_2$ $(\hat{\theta}_2=$" + "0.8)", linestyle="")
+plt.plot(p0s, JSpi1s, "h", color="#F25757", label=r"$D_1$ $(\hat{\theta}_1=$" + "0.3)")
+plt.plot(p0s, JSpi2s, color="#1094E9", marker="^", label=r"$D_2$ $(\hat{\theta}_2=$" + "0.8)", linestyle="")
 plt.legend(loc=1, title=r"The historical datasets")
-#plt.savefig("plot_pi_JS.pdf")
+plt.savefig("plot_pi_JS.pdf")
 plt.show()
 plt.close()

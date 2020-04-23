@@ -36,28 +36,41 @@ else:
     with open(dataDir/cleanFile, "rb") as f:
         resD, resJS = pickle.load(f)
 
-sps = []
-psList = []
-histpsList = []
+spsD = []
+spsJS = []
+psListD = []
+psListJS = []
+histpsListD = []
+histpsListJS = []
 for p0 in keys:
     curD = resD[p0]
     curJS = resJS[p0]
     lenD, lenJS = len(curD), len(curJS)
     p0 = float(p0)
-    psList = psList + [p0] * (lenD+lenJS)
-    sps = sps + list(curD) + list(curJS)
-    histpsList = histpsList + ["UIP-Dirichlet"] * lenD + ["UIP-JS"] * lenJS
+    psListD = psListD + [p0] * lenD
+    psListJS = psListJS + [p0] * lenJS
+    spsD = spsD + list(curD)
+    spsJS = spsJS + list(curJS)
 
-dicdata = {"y": sps, "ps": psList, "histps": histpsList}
-dfdata = pd.DataFrame(dicdata)
+dicdataD = {"y": spsD, "ps": psListD}
+dicdataJS = {"y": spsJS, "ps": psListJS}
+dfdataD = pd.DataFrame(dicdataD)
+dfdataJS = pd.DataFrame(dicdataJS)
 
 sns.set_style("white")
-sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette="Set3")
-# plt.xticks(labels=p0s)
+sns.boxplot(y="y", x="ps", data=dfdataD, palette=["#F25757"])
 plt.xlabel(r"$\theta$")
 plt.ylabel(r"Posterior mean of $M$")
-plt.ylim([0, 60])
-plt.legend(loc=1, title="Priors", frameon=True)
-plt.savefig(figDir/"boxplot_M_postm.pdf")
+plt.ylim([0, 50])
+plt.savefig(figDir/"boxplot_M_D_postm.pdf")
+plt.show()
+plt.close()
+
+sns.set_style("white")
+sns.boxplot(y="y", x="ps", data=dfdataJS, palette=["#F25757"])
+plt.xlabel(r"$\theta$")
+plt.ylabel(r"Posterior mean of $M$")
+plt.ylim([0, 50])
+plt.savefig(figDir/"boxplot_M_JS_postm.pdf")
 plt.show()
 plt.close()

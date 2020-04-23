@@ -41,7 +41,7 @@ dicdata = {"y": sps, "ps": psList, "histps": histpsList}
 dfdata = pd.DataFrame(dicdata)
 
 sns.set_style("white")
-sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette="Set3")
+sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette=["#F25757", "#1094E9"])
 #plt.xticks(labels=p0s)
 plt.xlabel(r"$\theta$")
 plt.ylabel(r"Posterior mean of $w_1/w_2$")

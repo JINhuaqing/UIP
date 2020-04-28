@@ -75,7 +75,7 @@ def getUIPDcon(D, Ds):
         Yobs = pm.Normal("Yobs", mu=thetah, sigma=np.sqrt(sigma2), observed=D)
     return UIPDm
 
-def getUIPJScon(D, Ds):
+def getUIPJScon(D, Ds, diag=False):
     def KLnorm(mu1, mu2, sigma1, sigma2):
         itm1 = np.log(sigma2/sigma1)
         itm2 = (sigma1**2 + (mu2-mu1)**2)/(2*sigma2**2) - 0.5
@@ -101,8 +101,8 @@ def getUIPJScon(D, Ds):
     Pis = 1/(np.array(invPis) + 1e-10)
     pis = np.array(Pis)/np.sum(Pis)
 
-    UIPDJS = pm.Model()
-    with UIPDJS:
+    UIPJS = pm.Model()
+    with UIPJS:
         sigma2 = pm.InverseGamma("sigma2", alpha=0.01, beta=0.01)
         M = pm.Uniform("M", lower=0, upper=nsSum)
         thetan = 0
@@ -114,7 +114,10 @@ def getUIPJScon(D, Ds):
         thetah = pm.Normal("thetah", mu=thetan, sigma=np.sqrt(sigma2n))
 
         Yobs = pm.Normal("Yobs", mu=thetah, sigma=np.sqrt(sigma2), observed=D)
-    return UIPDJS
+    if diag:
+        return {"UIPJS":UIPJS, "pis": pis}
+    else:
+        return UIPJS
 
 def getLCPcon(D, Ds):
     nD = len(Ds)

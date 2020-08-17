@@ -62,7 +62,7 @@ sns.boxplot(y="y", x="ps", hue="histps", data=dfdata, palette=["#F25757", "#1094
 plt.xlabel(r"$\theta$")
 plt.ylabel(r"$w_1/w_2$")
 plt.ylim([0, 1.33])
-plt.legend(loc=1, title=r"The historical datasets", frameon=True)
+plt.legend(loc=1, title=r"Historical datasets", frameon=True)
 plt.savefig(figDir/"boxplot_pi_JS.pdf")
 plt.show()
 plt.close()

@@ -31,7 +31,7 @@ def MH_beta(n, target_density, burnin):
         else:
             return beta.pdf(xt, 10*yt, 10*(1-yt))
             
-    xt = 0.5
+    xt = np.array([0.5])
     sps = []
     for i in range(n+burnin):
         if xt == 1:
@@ -43,9 +43,9 @@ def MH_beta(n, target_density, burnin):
             
         acc_prob = target_density(xt_can)*trans_den(xt, xt_can)/target_density(xt)/trans_den(xt_can, xt)
         acc_prob = np.min((acc_prob, 1))
+        if npr.rand(1) < acc_prob:
+            xt = xt_can
         if i >= burnin:
-            if npr.rand(1) < acc_prob:
-                xt = xt_can
             sps.append(xt)
     return np.array(sps).reshape(-1)
 
@@ -63,14 +63,14 @@ def MH_Gaussian(n, target_density, burnin):
     # The transition density function
     def trans_den(xt, yt):
         return norm.pdf(xt, loc=yt, scale=1)
-    xt = 0
+    xt = np.array([0])
     sps = []
     for i in range(n+burnin):
         xt_can = norm.rvs(loc=xt, scale=1, size=1)
         acc_prob = target_density(xt_can)*trans_den(xt, xt_can)/target_density(xt)/trans_den(xt_can, xt)
         acc_prob = np.min((acc_prob, 1))
+        if npr.rand(1) < acc_prob:
+            xt = xt_can
         if i >= burnin:
-            if npr.rand(1) < acc_prob:
-                xt = xt_can
             sps.append(xt)
     return np.array(sps).reshape(-1)

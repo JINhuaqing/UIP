@@ -1,4 +1,4 @@
-from utils import ESSJS_beta, ESS_UIPD_beta
+from utils import ESSBetaCon, ESSBetaH
 from scipy.stats import bernoulli
 from numpy.random import uniform
 import numpy as np
@@ -18,9 +18,9 @@ for M in Ms:
     ESSs = []
     for ps in tqdm(pss):
         Ds = [ bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
-        ESSUIPD = ESS_UIPD_beta(ns=ns, Ds=Ds, n=n, M=M, C=1e6)
-        ESSUIPD.getESS()
-        ESSs.append(ESSUIPD.res)
+        ESS2 = ESSBetaH(ns=ns, Ds=Ds, n=n, M=M, C=1e6)
+        ESS2.getESS()
+        ESSs.append(ESS2.res)
     ESSsM.append(ESSs)
     
 

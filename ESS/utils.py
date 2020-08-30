@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as npr
 from scipy.stats import beta, norm, bernoulli
-from scipy.special import roots_legendre
+from scipy.special import roots_legendre, roots_hermite
 from numpy.random import dirichlet
 from scipy.special import beta as Beta
 from tqdm import tqdm_notebook as tqdm
@@ -100,7 +100,7 @@ def JS_dist_beta(para1, para2):
 
 
 # The conditional ESS 
-def ESSJS_beta(M, ns, ps, n, p):
+def ESSBetaCon(M, ns, ps, n, p):
     """
     Input:
         M: The amount parameters
@@ -112,8 +112,6 @@ def ESSJS_beta(M, ns, ps, n, p):
         The ESS under the UIP-JS method
     
     """
-    alps = np.array([nh/n for nh in ns])
-    alps[alps>1] = 1
     Ds = [ bernoulli.rvs(ps[i], size=ns[i]) for i in range(len(ns))]
     D = bernoulli.rvs(p, size=n)
     msInv = []
@@ -140,9 +138,9 @@ def ESSJS_beta(M, ns, ps, n, p):
     return ESS
 
 
-class ESS_UIPD_beta():
-    def __init__(self, ns, Ds, n, M, C=100):
-        self.ns = np.array(ns)
+class ESSBetaH():
+    def __init__(self, Ds, n, M, C=100):
+        self.ns = np.array([len(Dh) for Dh in Ds])
         self.n = n
         self.M = M
         self.Ds = Ds
@@ -183,11 +181,11 @@ class ESS_UIPD_beta():
         vs = self._prior1(theta, wss)
         return np.mean(vs)
     
-    def delta_prior12_rvs(self, num):
+    def __delta_prior12_rvs(self, num):
         sps = MH_beta(n=num, target_density=self.delta_prior12, burnin=5000)
         return sps
     
-    def prior12_rvs(self, num):
+    def __prior12_rvs(self, num):
         sps = MH_beta(n=num, target_density=self.prior12, burnin=5000)
         self.prior12_sps = sps
         return sps
@@ -203,7 +201,7 @@ class ESS_UIPD_beta():
         logDen = logItm1 + logItm2 + logItm3
         return np.exp(logDen)
     
-    def delta_post12_rvs(self, num, ESS):
+    def __delta_post12_rvs(self, num, ESS):
         def tdensity(theta):
             return self.deltaPost12(theta, ESS)
         sps = MH_beta(n=num, target_density=tdensity, burnin=5000)
@@ -254,3 +252,109 @@ class ESS_UIPD_beta():
         idx = np.argmin(diffs)
         res = {"diffs":diffs, "ESS":idx+1}
         self.res = edict(res)
+        
+        
+
+def ESSNormalCon(M, Ds, D):
+    """
+    Input:
+        M: The amount parameters
+        Ds: The historical datasets
+        D: The current dataset
+    Return:
+        The ESS 
+    
+    """
+    msInv = []
+    n = len(D)
+    parasc = obtainInitPost(D, n)
+    for i, Dh in enumerate(Ds):
+        parash = obtainInitPost(Dh, n)
+        msInv.append(JSnorm(parasc[0], parash[0], parasc[1], parash[1]))
+    ms = 1/(np.array(msInv)+1e-10)
+    ws = ms/ms.sum()
+           
+    varhats = np.array([np.var(Dh) for Dh in Ds])
+    invEta2 = M*np.sum(ws / varhats) 
+    ESS = np.var(D)*invEta2
+    return ESS
+
+
+class ESSNormalH(ESSBetaH):
+    def __init__(self, Ds, D, M, C=100):
+        self.ns = np.array([len(Dh) for Dh in Ds])
+        self.n = len(D)
+        self.M = M
+        self.Ds = Ds
+        self.D = D
+        self.var = np.var(D)
+        self.C = C
+        
+        self.thetaBar = None
+        
+    def prior1_paras(self, wss):
+        thetas = np.array([np.mean(Dh) for Dh in self.Ds])
+        varrs = np.array([np.var(Dh) for Dh in self.Ds])
+        mus = np.sum(wss * thetas, axis=1)
+        invEta2s = self.M*np.sum(wss / varrs, axis=1)
+        return mus, invEta2s
+        
+    def _prior1(self, theta, wss):
+        mus, invEta2s = self.prior1_paras(wss)
+        etas = np.sqrt(1/invEta2s)
+        return norm.pdf(theta, loc=mus, scale=etas)
+        
+    
+    def _delta_prior1(self, theta, wss):
+        mus, invEta2s = self.prior1_paras(wss)
+        etas = np.sqrt(1/invEta2s)
+        eta_deltas = etas * self.C
+        return norm.pdf(theta, loc=mus, scale=eta_deltas)
+    
+    def integrate(self, fun, nNodes=100):
+        def func(x):
+            return fun(x)*np.exp(x**2)
+        pts, ws = roots_hermite(nNodes)
+        fvs = np.array([func(pt) for pt in pts])
+        return np.sum(fvs*ws)
+    
+    def deltaPost12(self, theta, ESS):
+        if self.thetaBar is None:
+            def func(theta):
+                return theta*self.prior12(theta)
+            self.thetaBar = self.integrate(func)
+        logItm1 = np.log(self.delta_prior12(theta))
+        logItm2 = -ESS*(self.thetaBar-theta)**2/2/self.var
+        logDen = logItm1 + logItm2
+        return np.exp(logDen)
+    
+def KLnorm(mu1, mu2, sigma1, sigma2):
+    itm1 = np.log(sigma2/sigma1)
+    itm2 = (sigma1**2 + (mu2-mu1)**2)/(2*sigma2**2) - 0.5
+    return itm1 + itm2
+
+def JSnorm(mu1, mu2, sigma1, sigma2):
+    KL1 = KLnorm(mu1, mu2, sigma1, sigma2)
+    KL2 = KLnorm(mu2, mu1, sigma2, sigma1)
+    return (KL1 + KL2)/2
+
+def obtainInitPost(Dh, nCur):
+    sigma20 = 100
+    nh = len(Dh)
+    if nh <= nCur:
+        sigma2hat = np.var(Dh)
+        muInit = sum(Dh)/(nh + sigma2hat/sigma20)
+        sigma2Init = 1 / (1/sigma20+nh/sigma2hat)
+    else:
+        muInits = []
+        sigma2Inits = []
+        for j in range(100):
+            DhCur = np.random.choice(Dh, size=nCur, replace=False)
+            sigma2hatCur = np.var(DhCur)
+            muInitCur = sum(DhCur)/(nCur + sigma2hatCur/sigma20)
+            sigma2InitCur = 1 / (1/sigma20+nCur/sigma2hatCur)
+            muInits.append(muInitCur)
+            sigma2Inits.append(sigma2InitCur)
+        muInit = np.mean(muInits)
+        sigma2Init = np.mean(sigma2Inits)
+    return muInit, sigma2Init

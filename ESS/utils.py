@@ -270,7 +270,7 @@ def ESSNormalCon(M, Ds, D):
     parasc = obtainInitPost(D, n)
     for i, Dh in enumerate(Ds):
         parash = obtainInitPost(Dh, n)
-        msInv.append(JSnorm(parasc[0], parash[0], parasc[1], parash[1]))
+        msInv.append(JSnorm(parasc[0], parash[0], parasc[1]**0.5, parash[1]**0.5))
     ms = 1/(np.array(msInv)+1e-10)
     ws = ms/ms.sum()
            

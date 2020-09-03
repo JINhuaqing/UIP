@@ -2,6 +2,7 @@ import numpy as np
 import numpy.random as npr
 from scipy.stats import norm, invgamma 
 import pymc3 as pm
+from rpy2 import robjects as robj
 
 
 def sigma2cond_theta(theta, D):
@@ -183,3 +184,49 @@ def getNPPNormal(D, Ds):
 
         Yobs = pm.Normal("Yobs", mu=thetah, sigma=np.sqrt(sigma2), observed=D)
     return myModel  
+
+
+# Obtain the input matrix for R code
+def getNormRDF(Ds):
+    ys = []
+    ns = []
+    y_ses = []
+    for Dh in Ds:
+        ys.append(np.mean(Dh))
+        ns.append(len(Dh))
+        y_ses.append(np.std(Dh)/np.sqrt(len(Dh)))
+    DF = ys + y_ses + ns
+    Rmat = robj.r.matrix(robj.FloatVector(DF), nrow=3, byrow=True)
+    return Rmat
+
+
+# Get the prior parameters for rMAP prior
+def getMixNorm(Ds, mean, w=0.1):
+    robj.r.source("MAPNorm.R")
+    Rmat = getNormRDF(Ds)
+    rmap = robj.r.getrMAPNormal(Ds=Rmat, w=w, mean=mean)
+    return np.array(rmap)
+
+
+# Get posterior sample under rMAP prior
+def getrMAPNormal(D, Ds, mean, w=0.1):
+    """
+    Inputs:
+        D:  The current dataset
+        Ds:  The historical datasets
+        mean: Mean parameter for weak-informative prior
+        w: The weight for robustified the MAP prior
+    Return:
+        The pymc context to draw the posterior samples
+    """
+    model = pm.Model()
+    paras = getMixNorm(Ds=Ds, mean=mean, w=w)
+    ws = paras[0, :]
+    mus = paras[1, :]
+    sigmas = paras[2, :]
+    with model:
+        norm_comps = pm.Normal.dist(mu=mus, sigma=sigmas, shape=len(mus))
+        thetap = pm.Mixture("thetaP", w=ws, comp_dists=norm_comps)
+        sigma2 = pm.InverseGamma("sigma2", alpha=0.01, beta=0.01)
+        Yobs = pm.Normal("Yobs", mu=thetap, sigma=np.sqrt(sigma2), observed=D)
+    return model

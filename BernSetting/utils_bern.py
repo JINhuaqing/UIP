@@ -210,3 +210,15 @@ def denMixBeta(x, paras):
 
 
 
+def popu_beta(alp, bt, cutoff):
+    eqInt = ss.beta.ppf([cutoff, 1-cutoff], a=alp, b=bt)
+    post_mean = alp/(alp+bt)
+    sps = ss.beta.rvs(a=alp, b=bt, size=10000)
+    HPDInt = pymcs.hpd(sps)
+    return {"eq":eqInt, "post_mean":post_mean, "HPD": HPDInt}
+
+def samp_beta(sps, cutoff):
+    eqInt = np.quantile(sps, q=[cutoff, 1-cutoff])
+    post_mean = np.mean(sps)
+    HPDInt = pymcs.hpd(sps)
+    return {"eq":eqInt, "post_mean":post_mean, "HPD": HPDInt}

@@ -25,7 +25,7 @@ thetas = [0.5, 1]
 ns = [100, 50]
 print(f"The theta0 is {theta0}.")
 
-dirname  = Path(f"BiostatR1_{int(100*theta0)}_n{int(n)}")
+dirname  = Path(f"./results/BiostatR1_{int(100*theta0)}_n{int(n)}")
 if not dirname.exists():
     dirname.mkdir()
 results = list(dirname.glob("*.pkl"))

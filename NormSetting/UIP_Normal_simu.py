@@ -20,7 +20,7 @@ Num = 1000
 # theta0 from 0 to 0.5 step by 0.05
 theta0 = args.t0
 sigma0 = sigma1 = sigma2 = 1
-n = 120
+n = 60
 thetas = [0.5, 1]
 ns = [100, 50]
 print(f"The theta0 is {theta0}.")

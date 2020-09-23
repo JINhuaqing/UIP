@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import bernoulli
-from utilities_bern import *
+from utils_bern import *
 import pickle
 from tqdm import tqdm
 np.random.seed(1)

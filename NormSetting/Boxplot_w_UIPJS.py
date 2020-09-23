@@ -9,7 +9,7 @@ from tqdm import tqdm
 np.random.seed(1)
 
 
-theta0s = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+theta0s = np.array([-0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3])
 n = 40
 thetas = [-0.30, 0.30]
 ns = [40, 40]

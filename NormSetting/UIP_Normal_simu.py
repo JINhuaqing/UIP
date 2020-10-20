@@ -118,6 +118,7 @@ for jj in range(Num):
         print(pm.summary(post_normal_UIPJS))
 
         # rMAP
+        # Using the GT theta0 for the informative component
         rMAP_model = getrMAPNormal(D, Ds, mean=theta0)
         with rMAP_model:
             step = pm.Metropolis()

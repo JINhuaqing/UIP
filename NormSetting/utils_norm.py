@@ -54,7 +54,7 @@ def gen_post_full(N, D, Ds, burnin=5000, thin=5, diag=False):
         return {"theta": thetas[burnin::thin], "sigma2": sigma2s[burnin::thin]}
 
 
-def getUIPDNormal(D, Ds, upM=None):
+def getUIPDNormal(D, Ds, upM=None, Means=None):
     nD = len(Ds)
     n = len(D)
     ns = np.array([len(Dh) for Dh in Ds])
@@ -63,7 +63,8 @@ def getUIPDNormal(D, Ds, upM=None):
     nsSum = np.sum([len(Dh) for Dh in Ds])
     if upM is None:
         upM = nsSum
-    Means = [np.mean(Dh) for Dh in Ds]
+    if Means is None:
+        Means = [np.mean(Dh) for Dh in Ds]
     Vars  = [np.var(Dh) for Dh in Ds]
     model = pm.Model()
     with model:
@@ -104,7 +105,11 @@ def obtainInitPost(Dh, nCur):
         sigma2Init = np.mean(sigma2Inits)
     return muInit, sigma2Init
 
-def getUIPJSNormal(D, Ds, diag=False, upM=None):
+
+def getUIPJSNormal(D, Ds, diag=False, upM=None, Means=None):
+    """
+    Means: to input the mean of historical datasets, for comparison
+    """
     def KLnorm(mu1, mu2, sigma1, sigma2):
         itm1 = np.log(sigma2/sigma1)
         itm2 = (sigma1**2 + (mu2-mu1)**2)/(2*sigma2**2) - 0.5
@@ -119,7 +124,8 @@ def getUIPJSNormal(D, Ds, diag=False, upM=None):
     nsSum = np.sum([len(Dh) for Dh in Ds])
     if upM is None:
         upM = nsSum
-    Means = [np.mean(Dh) for Dh in Ds]
+    if Means is None:
+        Means = [np.mean(Dh) for Dh in Ds]
     Vars  = [np.var(Dh) for Dh in Ds]
     parasc = obtainInitPost(D, n)
     invPis = []

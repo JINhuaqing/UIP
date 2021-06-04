@@ -24,7 +24,7 @@ for idx in tqdm(range(1, numRep+1)):
 
     DMspss = {}
     for theta0, D0 in zip(theta0s, D0s):
-        UIPJS_model = getUIPJSNormal(D0, Ds, upM=n)
+        UIPJS_model = getUIPJSNormal(D0, Ds, upM=80)
         with UIPJS_model:
             step = pm.Metropolis()
             post_norm_UIPJS = pm.sample(draws=5000, tune=5000,
@@ -35,5 +35,5 @@ for idx in tqdm(range(1, numRep+1)):
         DMspss[f"{theta0}"] = DMsps
     Allres.append(DMspss)
 
-with open(f"./Boxplot_M_UIPJS{numRep}.pkl", "wb") as f:
+with open(f"./Boxplot_M_UIPJS{numRep}_80.pkl", "wb") as f:
     pickle.dump(Allres, f)

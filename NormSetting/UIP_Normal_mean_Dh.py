@@ -16,7 +16,7 @@ parser.add_argument('-t0', type=float, default=0, help='mean of current data')
 args = parser.parse_args()
 
 
-Num = 1000
+Num = 100
 # theta0 from 0 to 0.5 step by 0.05
 theta0 = args.t0
 sigma0 = sigma1 = sigma2 = 1
@@ -109,7 +109,44 @@ for jj in range(Num):
         print(pm.summary(post_normal_UIPJS1))
 
 
+        # NPP prior
+        NPP_model = getNPPNormal(D, Ds)
+        with NPP_model:
+            step = pm.Metropolis()
+            post_normal_NPP = pm.sample(draws=5000, tune=5000,
+                    #target_accept=0.8, 
+                    step=step,
+                    cores=4, chains=4)
+        result["NPP"] = post_normal_NPP
+        print("The results of NPP")
+        print(pm.summary(post_normal_NPP))
 
+        print("--" * 100)
+
+        # LCP prior
+        LCP_model = getLCPNormal(D, Ds)
+        with LCP_model:
+            step = pm.Metropolis()
+            post_normal_LCP = pm.sample(draws=5000, tune=5000,
+                        #target_accept=0.9,
+                        step =step,
+                        cores=4, chains=4)
+        result["LCP"] = post_normal_LCP
+        print("The results of LCP")
+        print(pm.summary(post_normal_LCP))
+
+        # rMAP
+        # Using the GT theta0 for the informative component
+        rMAP_model = getrMAPNormal(D, Ds, mean=theta0)
+        with rMAP_model:
+            step = pm.Metropolis()
+            post_normal_rMAP = pm.sample(draws=5000, tune=5000, 
+                    #target_accept=0.8, 
+                    step=step,
+                    cores=4, chains=4)
+        result["rMAP"] = post_normal_rMAP
+        print("The results of rMAP")
+        print(pm.summary(post_normal_rMAP))
 
 
         print(f"Saving results at iteration {jj+1}")

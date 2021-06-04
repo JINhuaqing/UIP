@@ -10,7 +10,8 @@ np.random.seed(1)
 
 
 
-theta0s = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+#theta0s = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+theta0s = np.array([0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]) + 0.7
 n = 40
 thetas = [-0.30, 0.30]
 ns = [40, 40]
@@ -24,7 +25,7 @@ for idx in tqdm(range(1, numRep+1)):
 
     DMspss = {}
     for theta0, D0 in zip(theta0s, D0s):
-        UIPD_model = getUIPDNormal(D0, Ds, upM=80)
+        UIPD_model = getUIPDNormal(D0, Ds, upM=40)
         with UIPD_model:
             step = pm.Metropolis()
             post_norm_UIPD = pm.sample(draws=5000, tune=5000,
@@ -35,5 +36,5 @@ for idx in tqdm(range(1, numRep+1)):
         DMspss[f"{theta0}"] = DMsps
     Allres.append(DMspss)
 
-with open(f"./Boxplot_M_UIPD{numRep}_80.pkl", "wb") as f:
+with open(f"./Boxplot_M_UIPD{numRep}_dev.pkl", "wb") as f:
     pickle.dump(Allres, f)

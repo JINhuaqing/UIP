@@ -9,10 +9,39 @@ import time
 from pathlib import Path
 from easydict import EasyDict as edict
 
+def getUIPDNormal(D, Ds, upM=None, Means=None):
+    nD = len(Ds)
+    n = len(D)
+    ns = np.array([len(Dh) for Dh in Ds])
+    dalps = ns/n
+    dalps[dalps>=1] = 1
+    nsSum = np.sum([len(Dh) for Dh in Ds])
+    if upM is None:
+        upM = nsSum
+    if Means is None:
+        Means = [np.mean(Dh) for Dh in Ds]
+    Vars  = [np.var(Dh) for Dh in Ds]
+    model = pm.Model()
+    sigma2 = np.var(D)
+    with model:
+        #pis = pm.Dirichlet("pis", np.ones(nD))
+        pis = pm.Dirichlet("pis", dalps)
+        M = pm.Uniform("M", lower=0, upper=upM)
+
+        thetan = 0
+        sigma2n_inv = 0
+        for i in range(nD):
+            thetan += pis[i] * Means[i]
+            sigma2n_inv += pis[i] / Vars[i]
+        sigma2n = 1/M/sigma2n_inv
+        thetah = pm.Normal("thetah", mu=thetan, sigma=np.sqrt(sigma2n))
+
+        Yobs = pm.Normal("Yobs", mu=thetah, sigma=np.sqrt(sigma2), observed=D)
+    return model 
 np.random.seed(2020)
 
 parser = argparse.ArgumentParser(description='UIP Normal')
-parser.add_argument('-t0', type=float, default=0, help='mean of current data')
+parser.add_argument('-t0', type=float, default=0.6, help='mean of current data')
 args = parser.parse_args()
 
 

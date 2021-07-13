@@ -10,3 +10,4 @@ RealData/*
 CodeBack/*
 !RealData/RealData_AD_SIMR1.ipynb
 plots/*
+*.ipynb
